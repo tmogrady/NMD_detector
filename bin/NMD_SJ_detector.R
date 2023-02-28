@@ -13,10 +13,8 @@ sj <- sj %>%
   mutate(strand = ifelse(strand == 1, "+",
                          ifelse(strand == 2, "-",
                                 strand)))
-
-#first, get annotated genes (transcripts?) for each SJ
+#make SJ data a GRanges object
 sj_gr <- makeGRangesFromDataFrame(sj, keep.extra.columns = TRUE)
-
 
 #check if coding
 #check if SJ coordinates here are annotated (check donor & acceptor separately)
