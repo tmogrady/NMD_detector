@@ -1,6 +1,7 @@
 #to assess likelihood of NMD targeting by STAR-reported splice junctions
 
 library("dplyr")
+library("GenomicRanges")
 
 #read in STAR SJ.out.tab file
 sj <- read.table("input_data/MC1_truncated_test-SJ.out.tab")
