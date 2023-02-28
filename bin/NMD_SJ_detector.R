@@ -19,8 +19,14 @@ sj <- sj %>%
 sj_gr <- makeGRangesFromDataFrame(sj, keep.extra.columns = TRUE)
 
 #get ensembl annotation
-edb <- EnsDb.Hsapiens.v90
+edb <- EnsDb.Hsapiens.v86
 tx_gn <- transcriptsBy(edb, by = "gene")
+
+#check if SJs are in annotated genes
+sj_tx_gn <- findOverlaps(sj_gr, tx_gn)
+#PROBLEM. No overlaps here, but definitely should be (test cases are all in genes)
+#looks like tx_gn is not complete. Why not?
+
 
 #check if coding
 #check if SJ coordinates here are annotated (check donor & acceptor separately)
