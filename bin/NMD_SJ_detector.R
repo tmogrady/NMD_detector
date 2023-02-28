@@ -2,6 +2,8 @@
 
 library("dplyr")
 library("GenomicRanges")
+#library("ensembldb")
+library("EnsDb.Hsapiens.v86") #most recent version available
 
 #read in STAR SJ.out.tab file
 sj <- read.table("input_data/MC1_truncated_test-SJ.out.tab")
@@ -15,6 +17,10 @@ sj <- sj %>%
                                 strand)))
 #make SJ data a GRanges object
 sj_gr <- makeGRangesFromDataFrame(sj, keep.extra.columns = TRUE)
+
+#get ensembl annotation
+edb <- EnsDb.Hsapiens.v90
+tx_gn <- transcriptsBy(edb, by = "gene")
 
 #check if coding
 #check if SJ coordinates here are annotated (check donor & acceptor separately)
