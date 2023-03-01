@@ -21,16 +21,14 @@ sj_gr <- makeGRangesFromDataFrame(sj, keep.extra.columns = TRUE)
 
 #get ensembl annotation
 ann <- import("/Applications/Genomics_applications/Genomes_and_transcriptomes/hg38_plus_Akata_inverted.bed.converted.bed.reconfigured.bed")
-sj_ann <- findOverlaps(sj_gr, ann)
-#edb <- EnsDb.Hsapiens.v86
-#tx_gn <- transcriptsBy(edb, by = "gene")
+ovrlp <- findOverlaps(sj_gr, ann, type = "within", select = "first")
+#will need to deal with multiple isoforms
+sj_ann <- sj_gr
+sj_ann$name <- ann$name[ovrlp]
+sj_ann$thick <- ann$thick[ovrlp]
+sj_ann$blocks <- ann$blocks[ovrlp]
 
 #check if SJs are in annotated genes
-#sj_tx_gn <- findOverlaps(sj_gr, tx_gn)
-#PROBLEM. No overlaps here, but definitely should be (test cases are all in genes)
-#looks like tx_gn is not complete. Why not?
-
-
 #check if coding
 #check if SJ coordinates here are annotated (check donor & acceptor separately)
 #if so, check if there are annotated exons between
