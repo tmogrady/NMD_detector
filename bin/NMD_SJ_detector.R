@@ -2,8 +2,9 @@
 
 library("dplyr")
 library("GenomicRanges")
+library("rtracklayer")
 #library("ensembldb")
-library("EnsDb.Hsapiens.v86") #most recent version available
+#library("EnsDb.Hsapiens.v86") #most recent version available
 
 #read in STAR SJ.out.tab file
 sj <- read.table("input_data/MC1_truncated_test-SJ.out.tab")
@@ -19,11 +20,13 @@ sj <- sj %>%
 sj_gr <- makeGRangesFromDataFrame(sj, keep.extra.columns = TRUE)
 
 #get ensembl annotation
-edb <- EnsDb.Hsapiens.v86
-tx_gn <- transcriptsBy(edb, by = "gene")
+ann <- import("/Applications/Genomics_applications/Genomes_and_transcriptomes/hg38_plus_Akata_inverted.bed.converted.bed.reconfigured.bed")
+sj_ann <- findOverlaps(sj_gr, ann)
+#edb <- EnsDb.Hsapiens.v86
+#tx_gn <- transcriptsBy(edb, by = "gene")
 
 #check if SJs are in annotated genes
-sj_tx_gn <- findOverlaps(sj_gr, tx_gn)
+#sj_tx_gn <- findOverlaps(sj_gr, tx_gn)
 #PROBLEM. No overlaps here, but definitely should be (test cases are all in genes)
 #looks like tx_gn is not complete. Why not?
 
