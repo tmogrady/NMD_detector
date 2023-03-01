@@ -28,8 +28,8 @@ sj_ann$name <- ann$name[ovrlp]
 sj_ann$thick <- ann$thick[ovrlp]
 sj_ann$blocks <- ann$blocks[ovrlp]
 
-#check if SJs are in annotated genes
-#check if coding
+#check if SJs are in annotated genes (add unannotated case to sample data)
+#check if coding (maybe do this before annotating SJs?)
 #check if SJ coordinates here are annotated (check donor & acceptor separately)
 #if so, check if there are annotated exons between
 #if so, look at exon(s) and divide by 3 to check for frameshift
