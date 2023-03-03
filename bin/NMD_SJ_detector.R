@@ -89,7 +89,14 @@ for (transcript in transcripts) {
       print("no SE")
     }
     else {
-      print("SE!")
+      se <- relevant[2:(nrow(relevant) - 1), ]
+      se$exon_length <- se$end - se$start + 1
+      if (sum(se$exon_length) %% 3 == 0) {
+        print("in frame SE")
+      }
+      else {
+        print(paste("out-of-frame SE:", sum(se$exon_length), "nt"))
+      }
     }
   }
 }
