@@ -48,8 +48,8 @@ transcript_df <- gene_df %>%
   filter(transcript_id == "ENST00000370141") %>%
   filter(type == "CDS")
 
-for (transcript in transcripts) {
-  if (is.na(transcript)) {
+for (transcript in transcripts) { #go through each transcript
+  if (is.na(transcript)) { #ignore gene lines (NA in transcript field)
     next
   }
   else {
@@ -61,46 +61,53 @@ for (transcript in transcripts) {
       print(paste(transcript, "has no CDS"))
       next
     }
-    else {
-      relevant <- data.frame()
+    else { #if the transcript is coding, look further
+      relevant <- data.frame() #set up a df for relevant exons
       for (i in 1:nrow(transcript_df)) {
-        if (nrow(relevant) == 0) {
+        if (nrow(relevant) == 0) { #look for matching sj donor
           if (start(sj_pc[1])-1 == transcript_df[i,3]) {
-            relevant <- transcript_df[i,]
+            relevant <- transcript_df[i,] #SJ donor is a relevant exon. Add it.
           }
           else {
             next
           }
         }
-        else { #if there is content in "relevant"
+        else { #if there is content in "relevant" (i.e. we've found a matching donor)
           #print(i)
-          if (end(sj_pc[1])+1 == transcript_df[i,2]) {
+          if (end(sj_pc[1])+1 == transcript_df[i,2]) { #look for matching acceptor
             relevant <- rbind(relevant, transcript_df[i,])
-            break
+            break #if matching acceptor is found, we have all the exons we need
           }
           else {
             relevant <- rbind(relevant, transcript_df[i,])
           }
         }
       }
-    }
-
-    if (nrow(relevant) == 2) {
-      print("no SE")
-    }
+    } #end of transcript
+    if (nrow(relevant) == 0 | (end(sj_pc[1])+1 != relevant[nrow(relevant),2])) {
+      print("splice sites not annotated in this transcript")
+    }  
     else {
-      se <- relevant[2:(nrow(relevant) - 1), ]
-      se$exon_length <- se$end - se$start + 1
-      if (sum(se$exon_length) %% 3 == 0) {
-        print("in frame SE")
+      if (nrow(relevant) == 2) {
+        print("annotated SJ: no new SE")
       }
       else {
-        print(paste("out-of-frame SE:", sum(se$exon_length), "nt"))
+        se <- relevant[2:(nrow(relevant) - 1), ]
+        se$exon_length <- se$end - se$start + 1
+        if (sum(se$exon_length) %% 3 == 0) {
+          print("new in frame SE")
+        }
+        else {
+          print(paste("new out-of-frame SE:", sum(se$exon_length), "nt"))
+        }
       }
     }
   }
 }
 
+test_transcript_df <- gene_df %>%
+  filter(transcript_id == "ENST00000370143") %>%
+  filter(type == "CDS")
 
 ann_gtf[ann_gtf$transcript_id == "ENST00000370143"]
 #Error: logical subscript contains NAs
