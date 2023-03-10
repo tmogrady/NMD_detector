@@ -2,7 +2,10 @@
 
 library("dplyr")
 library("GenomicRanges")
+library("GenomicFeatures")
 library("rtracklayer")
+library("BSgenome.Hsapiens.UCSC.hg38")
+
 #library("ensembldb")
 #library("EnsDb.Hsapiens.v86") #most recent version available
 
@@ -99,17 +102,35 @@ for (transcript in transcripts) { #go through each transcript
         }
         else {
           print(paste("new out-of-frame SE:", sum(se$exon_length), "nt"))
+          #get sequence of this transcript
+          #remove SE
+          #and look for stop codons
         }
       }
     }
   }
 }
 
+trans_gr <- gene_gr[2]
+#this is ENST00000370143
+
+test_seq <- getSeq(Hsapiens, trans_gr)
+#gives warning but seems to work
+#includes UTR sequence
+#ah! only first exon
+
 test_transcript_df <- gene_df %>%
   filter(transcript_id == "ENST00000370143") %>%
   filter(type == "CDS")
 
-ann_gtf[ann_gtf$transcript_id == "ENST00000370143"]
+#trying something else ####
+gene_cds_gr <- gene_gr[gene_gr$type == "CDS"]
+trans_gr <- gene_cds_gr[gene_cds_gr$transcript_id == "ENST00000370143"]
+test_seq <- getSeq(Hsapiens, trans_gr)
+#worked! But is a list of exons rather than a complete sequence
+#note that stop codon is not included
+
+trans_gr <- ann_gtf[ann_gtf$transcript_id == "ENST00000370143"]
 #Error: logical subscript contains NAs
 #could possibly get around this error by subsetting based on genomic coordinates of gene
 
