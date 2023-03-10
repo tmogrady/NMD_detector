@@ -44,8 +44,11 @@ sj_pc <- sj_ann[sj_ann$gene_biotype == "protein_coding"]
 #or otherwise work around metadata NA errors
 #this is the first (annotated, protein-coding) example SJ's gene:
 gene_gr <- ann_gtf[ann_gtf$gene_id == "ENSG00000122435"]
+#get only CDS. That's what we need
+#and this will avoid errors later when subsetting on transcript
+gene_cds_gr <- gene_gr[gene_gr$type == "CDS"]
 #move to dataframes because they're easier and avoid GRanges metadata NA problem
-gene_df <- data.frame(gene_gr)
+gene_df <- data.frame(gene_cds_gr)
 transcripts <- unique(gene_df$transcript_id)
 transcript_df <- gene_df %>%
   filter(transcript_id == "ENST00000370141") %>%
@@ -111,24 +114,13 @@ for (transcript in transcripts) { #go through each transcript
   }
 }
 
-trans_gr <- gene_gr[2]
-#this is ENST00000370143
 
-test_seq <- getSeq(Hsapiens, trans_gr)
-#gives warning but seems to work
-#includes UTR sequence
-#ah! only first exon
-
-test_transcript_df <- gene_df %>%
-  filter(transcript_id == "ENST00000370143") %>%
-  filter(type == "CDS")
-
-#trying something else ####
-gene_cds_gr <- gene_gr[gene_gr$type == "CDS"]
 trans_gr <- gene_cds_gr[gene_cds_gr$transcript_id == "ENST00000370143"]
 test_seq <- getSeq(Hsapiens, trans_gr)
 #worked! But is a list of exons rather than a complete sequence
 #note that stop codon is not included
+#try to remove an exon:
+test_seq_se <- test_seq[c(1,2,4,5)]
 
 trans_gr <- ann_gtf[ann_gtf$transcript_id == "ENST00000370143"]
 #Error: logical subscript contains NAs
