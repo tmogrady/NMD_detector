@@ -99,7 +99,7 @@ for (transcript in transcripts) { #go through each transcript
       }
       else {
         se <- relevant[2:(nrow(relevant) - 1), ]
-        se$exon_length <- se$end - se$start + 1
+        se$exon_length <- se$end - se$start + 1 #could use width column here
         if (sum(se$exon_length) %% 3 == 0) {
           print("new in frame SE")
         }
@@ -115,12 +115,38 @@ for (transcript in transcripts) { #go through each transcript
 }
 
 
-trans_gr <- gene_cds_gr[gene_cds_gr$transcript_id == "ENST00000370143"]
+trans_gr <- gene_cds_gr[gene_cds_gr$transcript_id == "ENST00000370141"]
+
+#make a df to figure out what I'm doing:
+trans_df <- data.frame(trans_gr)
+
 test_seq <- getSeq(Hsapiens, trans_gr)
 #worked! But is a list of exons rather than a complete sequence
+#warning message but ok
 #note that stop codon is not included
+
+#combine exons in one sequence:
+#(got to be a better way to do this :/)
+test_seq_trans <- ""
+for (i in 1:length(test_seq)) {
+  test_seq_trans <- paste(test_seq_trans, as.character(test_seq[i]), sep = "")
+}
+test_seq_trans <- DNAString(test_seq_trans)
+test_whole_trans_aa <- translate(test_seq_trans)
+countPattern("*", test_whole_trans_aa)
+
 #try to remove an exon:
-test_seq_se <- test_seq[c(1,2,4,5)]
+#for transcript ENST00000370141 it's exon 5
+test_seq_se <- test_seq[c(1:4,6:length(test_seq))]
+test_seq_se_trans <- ""
+for (i in 1:length(test_seq_se)) {
+  test_seq_se_trans <- paste(test_seq_se_trans, as.character(test_seq_se[i]), sep = "")
+}
+test_seq_se_trans <- DNAString(test_seq_se_trans)
+test_whole_se_trans_aa <- translate(test_seq_se_trans)
+#warning that last two bases were ignored. Out-of-frame! Hooray!
+countPattern("*", test_whole_se_trans_aa)
+#17!
 
 trans_gr <- ann_gtf[ann_gtf$transcript_id == "ENST00000370143"]
 #Error: logical subscript contains NAs
