@@ -102,7 +102,7 @@ for (transcript in transcripts) { #go through each transcript
   }
 }
 
-
+#check for PTCs and NMD
 trans_gr <- gene_cds_gr[gene_cds_gr$transcript_id == "ENST00000370141"]
 
 #make a df to figure out what I'm doing:
@@ -141,9 +141,11 @@ countPattern("*", test_whole_se_trans_aa)
 #(otherwise it might be NMD-triggering anyways)
 
 #get aa position of first *
+#reverse translate that to nucleotide position
 ptc_pos <- (unlist(gregexpr("\\*", test_whole_se_trans_aa))[1])*3
 # nucleotide 330 in this example
 
+#use the list of exons to see if it's >50 nt upstream of a junction
 exon_sizes <- width(test_seq_se)
 exon_starts <- 1
 for (i in 1:length(exon_sizes)-1) {
@@ -151,19 +153,12 @@ for (i in 1:length(exon_sizes)-1) {
 }
 print(exon_starts)
 
-
 if (any(ptc_pos < (exon_starts - 50))) {
   print("NMD!")
 } else {
   print("No NMD!")
 }
 
-
-#reverse translate that to nucleotide position
-#use the list of exons to see if it's >50 nt upstream of a junction
-
-trans_gr <- ann_gtf[ann_gtf$transcript_id == "ENST00000370143"]
-#Error: logical subscript contains NAs
 
 #to assess things at the end, will need to somehow compare depth (not just number I think)
 #of NMD-targeting splice junctions to other splice junctions
