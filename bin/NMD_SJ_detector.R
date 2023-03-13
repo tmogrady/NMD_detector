@@ -54,8 +54,7 @@ transcript_df <- gene_df %>%
 for (transcript in transcripts) { #go through each transcript
   if (is.na(transcript)) { #ignore gene lines (NA in transcript field)
     next
-  }
-  else {
+  } else {
     print(transcript)
     transcript_df <- gene_df %>%
       filter(transcript_id == transcript) %>%
@@ -63,24 +62,20 @@ for (transcript in transcripts) { #go through each transcript
     if (nrow(transcript_df) == 0) {
       print(paste(transcript, "has no CDS"))
       next
-    }
-    else { #if the transcript is coding, look further
+    } else { #if the transcript is coding, look further
       relevant <- data.frame() #set up a df for relevant exons
       for (i in 1:nrow(transcript_df)) {
         if (nrow(relevant) == 0) { #look for matching sj donor
           if (start(sj_pc[1])-1 == transcript_df[i,3]) {
             relevant <- transcript_df[i,] #SJ donor is a relevant exon. Add it.
-          }
-          else {
+          } else {
             next
           }
-        }
-        else { #if there is content in "relevant" (i.e. we've found a matching donor)
+        } else { #if there is content in "relevant" (i.e. we've found a matching donor)
           if (end(sj_pc[1])+1 == transcript_df[i,2]) { #look for matching acceptor
             relevant <- rbind(relevant, transcript_df[i,])
             break #if matching acceptor is found, we have all the exons we need
-          }
-          else {
+          } else {
             relevant <- rbind(relevant, transcript_df[i,])
           }
         }
@@ -88,18 +83,15 @@ for (transcript in transcripts) { #go through each transcript
     } #end of transcript
     if (nrow(relevant) == 0 | (end(sj_pc[1])+1 != relevant[nrow(relevant),2])) {
       print("splice sites not annotated in this transcript") #ignore for now
-    }  
-    else {
+    }  else {
       if (nrow(relevant) == 2) {
         print("annotated SJ: no new SE") #assume no NMD
-      }
-      else {
+      } else {
         se <- relevant[2:(nrow(relevant) - 1), ]
         se$exon_length <- se$end - se$start + 1 #could use width column here
         if (sum(se$exon_length) %% 3 == 0) { #in-frame: assume no NMD
           print("new in frame SE")
-        }
-        else {
+        } else {
           print(paste("new out-of-frame SE:", sum(se$exon_length), "nt"))
           #get sequence of this transcript
           #remove SE
