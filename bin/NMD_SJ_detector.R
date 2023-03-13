@@ -145,6 +145,31 @@ test_whole_se_trans_aa <- translate(test_seq_se_trans)
 countPattern("*", test_whole_se_trans_aa)
 #17! Good!
 
+#for now assume that the last CDS exon is the last exon
+#(otherwise it might be NMD-triggering anyways)
+
+#get aa position of first *
+ptc_pos <- (unlist(gregexpr("\\*", test_whole_se_trans_aa))[1])*3
+# nucleotide 330 in this example
+
+exon_sizes <- width(test_seq_se)
+exon_starts <- 1
+for (i in 1:length(exon_sizes)-1) {
+  exon_starts <- append(exon_starts, exon_starts[i] + exon_sizes[i])
+}
+print(exon_starts)
+
+
+if (any(ptc_pos < (exon_starts - 50))) {
+  print("NMD!")
+} else {
+  print("No NMD!")
+}
+
+
+#reverse translate that to nucleotide position
+#use the list of exons to see if it's >50 nt upstream of a junction
+
 trans_gr <- ann_gtf[ann_gtf$transcript_id == "ENST00000370143"]
 #Error: logical subscript contains NAs
 
