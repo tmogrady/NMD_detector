@@ -101,46 +101,39 @@ for (transcript in transcripts) { #go through each transcript
           print(paste("new out-of-frame SE:", sum(se$exon_length), "nt"))
           #get sequence of this transcript
           #remove SE
-          #and look for stop codons
+          #and look for stop codons >50 nt upstream of annotated junctions
+          #if there is NMD, count it, keep it somewhere,
+               #break the loop and go to the next splice junction
+          #probably put these steps into a function to put here
         }
       }
     }
   }
 }
 
-#check for PTCs and NMD
-trans_gr <- gene_cds_gr[gene_cds_gr$transcript_id == "ENST00000370141"]
+#make a function given transcript name, exon number(s) and gene_cds_gr
+transcript = "ENST00000370141"
+ses = se$exon_number
 
-#make a df to figure out what I'm doing:
-trans_df <- data.frame(trans_gr)
+#get GRanges object for transcript CDS exons
+trans_gr <- gene_cds_gr[gene_cds_gr$transcript_id == transcript]
+#get sequence of the (annotated) transcript
+trans_full_seq <- getSeq(Hsapiens, trans_gr)
 
-test_seq <- getSeq(Hsapiens, trans_gr)
-#worked! But is a list of exons rather than a complete sequence
-#warning message but ok
-#note that stop codon is not included
+#remove skipped exons from transcript's set of exons
+used_exons <- c(1:length(trans_full_seq))
+used_exons <- used_exons[!used_exons %in% ses ]
+trans_se_seq <- trans_full_seq[used_exons]
 
-#combine exons in one sequence:
-#(got to be a better way to do this :/)
-test_seq_trans <- ""
-for (i in 1:length(test_seq)) {
-  test_seq_trans <- paste(test_seq_trans, as.character(test_seq[i]), sep = "")
+#put together the exons to get the AS isoform sequence:
+trans_se_seq_uni <- ""
+for (i in 1:length(trans_se_seq)) {
+  trans_se_seq_uni <- paste(trans_se_seq_uni, as.character(trans_se_seq[i]), sep = "")
 }
-test_seq_trans <- DNAString(test_seq_trans)
-test_whole_trans_aa <- translate(test_seq_trans)
-countPattern("*", test_whole_trans_aa)
-#0. Good.
-
-#try to remove an exon:
-#for transcript ENST00000370141 it's exon 5
-test_seq_se <- test_seq[c(1:4,6:length(test_seq))]
-test_seq_se_trans <- ""
-for (i in 1:length(test_seq_se)) {
-  test_seq_se_trans <- paste(test_seq_se_trans, as.character(test_seq_se[i]), sep = "")
-}
-test_seq_se_trans <- DNAString(test_seq_se_trans)
-test_whole_se_trans_aa <- translate(test_seq_se_trans)
+trans_se_seq_uni <- DNAString(trans_se_seq_uni)
+trans_se_seq_aa <- translate(trans_se_seq_uni)
 #warning that last two bases were ignored. Out-of-frame! Hooray!
-countPattern("*", test_whole_se_trans_aa)
+countPattern("*", trans_se_seq_aa)
 #17! Good!
 
 #for now assume that the last CDS exon is the last exon
@@ -148,11 +141,11 @@ countPattern("*", test_whole_se_trans_aa)
 
 #get aa position of first *
 #reverse translate that to nucleotide position
-ptc_pos <- (unlist(gregexpr("\\*", test_whole_se_trans_aa))[1])*3
+ptc_pos <- (unlist(gregexpr("\\*", trans_se_seq_aa))[1])*3
 # nucleotide 330 in this example
 
 #use the list of exons to see if it's >50 nt upstream of a junction
-exon_sizes <- width(test_seq_se)
+exon_sizes <- width(trans_se_seq)
 exon_starts <- 1
 for (i in 1:length(exon_sizes)-1) {
   exon_starts <- append(exon_starts, exon_starts[i] + exon_sizes[i])
