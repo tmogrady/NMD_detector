@@ -51,8 +51,14 @@ transcript_df <- gene_df %>%
   filter(transcript_id == "ENST00000370141") %>%
   filter(type == "CDS")
 
+#input going into this for loop:
+     #transcripts: list of transcripts (in one gene that has been identified as containing an SJ; e.g. one gene from sj_pc)
+     #gene_df: data frame of gtf rows for that gene
+     #sj_pc[1]: a detected splice junction and the gene it's in
+#eventually, put this all in a big for loop based on sj_pc
+#and generate gene_df and transcripts from the info in each line of sj_pc
 for (transcript in transcripts) { #go through each transcript
-  if (is.na(transcript)) { #ignore gene lines (NA in transcript field)
+  if (is.na(transcript)) { #ignore gene lines (NA in transcript field). Though actually shouldn't be any
     next
   } else {
     print(transcript)
