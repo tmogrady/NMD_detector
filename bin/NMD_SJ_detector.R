@@ -47,18 +47,7 @@ check_NMD <- function(transcript, exons, gene_gr) {
 }
 
 
-
-#warning that last two bases were ignored. Out-of-frame! Hooray!
-countPattern("*", trans_se_seq_aa)
-#17! Good!
-
-
-# nucleotide 330 in this example
-
-
-
-
-
+#read in data ####
 #read in STAR SJ.out.tab file
 sj <- read.table("input_data/MC1_truncated_test-SJ.out.tab")
 
@@ -73,10 +62,10 @@ sj <- sj %>%
 sj_gr <- makeGRangesFromDataFrame(sj, keep.extra.columns = TRUE)
 
 #get annotation (gtf)
-#try gff
 ann_gtf <- import("/Applications/Genomics_applications/Genomes_and_transcriptomes/hg38_plus_Akata_inverted.gtf")
 ann_gtf_gene <- ann_gtf[mcols(ann_gtf)$type == "gene"]
-  
+
+#get genes that contain detected SJs
 ovrlp <- findOverlaps(sj_gr, ann_gtf_gene, type = "within", select = "first")
 #later consider how to handle SJs within multiple genes (not common)
 sj_ann <- sj_gr
@@ -109,6 +98,8 @@ transcript_df <- gene_df %>%
 #eventually, put this all in a big for loop based on sj_pc
 #and generate gene_df and transcripts from the info in each line of sj_pc
 
+#not doing anything with these yet
+#but will eventually need a place to put the SJs that have been checked
 sj_NMD <- data.frame()
 sj_no_NMD <- data.frame()
 
@@ -155,12 +146,9 @@ for (transcript in transcripts) { #go through each transcript
         } else {
           print(paste("new out-of-frame SE:", sum(se$exon_length), "nt"))
           check_NMD(transcript, se$exon_number, gene_cds_gr)
-          #get sequence of this transcript
-          #remove SE
-          #and look for stop codons >50 nt upstream of annotated junctions
-          #if there is NMD, count it, keep it somewhere,
-               #break the loop and go to the next splice junction
-          #probably put these steps into a function to put here
+          #currently this function just prints to terminal if there is NMD or not
+          #next: get it to break the loop and go to the next SJ if it finds NMD
+          #and, count and save the NMD-associated SJ
         }
       }
     }
@@ -169,7 +157,9 @@ for (transcript in transcripts) { #go through each transcript
 
 
 #code contributing to check_NMD function:
+#to delete once function is better tested
 #make a function given transcript name, exon number(s) and gene_cds_gr
+#transcript = "ENST00000482437"
 transcript = "ENST00000370141"
 ses = se$exon_number
 
@@ -215,7 +205,6 @@ if (any(ptc_pos < (exon_starts - 50))) {
 } else {
   print("No NMD!")
 }
-
 
 #to assess things at the end, will need to somehow compare depth (not just number I think)
 #of NMD-targeting splice junctions to other splice junctions
