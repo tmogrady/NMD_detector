@@ -8,6 +8,57 @@ library("BSgenome.Hsapiens.UCSC.hg38")
 #library("ensembldb")
 #library("EnsDb.Hsapiens.v86") #most recent version available
 
+#functions ####
+
+check_NMD <- function(transcript, exons, gene_gr) {
+  #get GRanges object for transcript CDS exons
+  trans_gr <- gene_cds_gr[gene_cds_gr$transcript_id == transcript]
+  #get sequence of the (annotated) transcript
+  trans_full_seq <- getSeq(Hsapiens, trans_gr)
+  #remove skipped exons from transcript's set of exons
+  used_exons <- c(1:length(trans_full_seq))
+  used_exons <- used_exons[!used_exons %in% ses ]
+  trans_se_seq <- trans_full_seq[used_exons]
+  #put together the exons to get the AS isoform sequence:
+  trans_se_seq_uni <- ""
+  for (i in 1:length(trans_se_seq)) {
+    trans_se_seq_uni <- paste(trans_se_seq_uni, as.character(trans_se_seq[i]), sep = "")
+  }
+  trans_se_seq_uni <- DNAString(trans_se_seq_uni)
+  trans_se_seq_aa <- translate(trans_se_seq_uni)
+  #for now assume that the last CDS exon is the last exon
+  #(otherwise it might be NMD-triggering anyways)
+  
+  #get aa position of first *
+  #reverse translate that to nucleotide position
+  ptc_pos <- (unlist(gregexpr("\\*", trans_se_seq_aa))[1])*3
+  #use the list of exons to see if it's >50 nt upstream of a junction
+  exon_sizes <- width(trans_se_seq)
+  exon_starts <- 1
+  for (i in 1:length(exon_sizes)-1) {
+    exon_starts <- append(exon_starts, exon_starts[i] + exon_sizes[i])
+  }
+  #print(exon_starts)
+  if (any(ptc_pos < (exon_starts - 50))) {
+    print("NMD!")
+  } else {
+    print("No NMD!")
+  }
+}
+
+
+
+#warning that last two bases were ignored. Out-of-frame! Hooray!
+countPattern("*", trans_se_seq_aa)
+#17! Good!
+
+
+# nucleotide 330 in this example
+
+
+
+
+
 #read in STAR SJ.out.tab file
 sj <- read.table("input_data/MC1_truncated_test-SJ.out.tab")
 
@@ -57,6 +108,10 @@ transcript_df <- gene_df %>%
      #sj_pc[1]: a detected splice junction and the gene it's in
 #eventually, put this all in a big for loop based on sj_pc
 #and generate gene_df and transcripts from the info in each line of sj_pc
+
+sj_NMD <- data.frame()
+sj_no_NMD <- data.frame()
+
 for (transcript in transcripts) { #go through each transcript
   if (is.na(transcript)) { #ignore gene lines (NA in transcript field). Though actually shouldn't be any
     next
@@ -99,6 +154,7 @@ for (transcript in transcripts) { #go through each transcript
           print("new in frame SE")
         } else {
           print(paste("new out-of-frame SE:", sum(se$exon_length), "nt"))
+          check_NMD(transcript, se$exon_number, gene_cds_gr)
           #get sequence of this transcript
           #remove SE
           #and look for stop codons >50 nt upstream of annotated junctions
@@ -111,6 +167,8 @@ for (transcript in transcripts) { #go through each transcript
   }
 }
 
+
+#code contributing to check_NMD function:
 #make a function given transcript name, exon number(s) and gene_cds_gr
 transcript = "ENST00000370141"
 ses = se$exon_number
