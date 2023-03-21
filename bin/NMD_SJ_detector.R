@@ -40,9 +40,9 @@ check_NMD <- function(transcript, exons, gene_gr) {
   }
   #print(exon_starts)
   if (any(ptc_pos < (exon_starts - 50))) {
-    print("NMD!")
+    return("yes")
   } else {
-    print("No NMD!")
+    return("no")
   }
 }
 
@@ -100,6 +100,9 @@ transcript_df <- gene_df %>%
 
 #not doing anything with these yet
 #but will eventually need a place to put the SJs that have been checked
+sj_NMD <- data.frame(seqnames=NA, start=NA, end=NA, width=NA, 
+                     strand=NA, motif=NA, ann=NA, unique=c(), multi=c(), 
+                     overhang=c(), gene_id=c(), gene_biotype=c())
 sj_NMD <- data.frame()
 sj_no_NMD <- data.frame()
 
@@ -145,10 +148,13 @@ for (transcript in transcripts) { #go through each transcript
           print("new in frame SE")
         } else {
           print(paste("new out-of-frame SE:", sum(se$exon_length), "nt"))
-          check_NMD(transcript, se$exon_number, gene_cds_gr)
-          #currently this function just prints to terminal if there is NMD or not
-          #next: get it to break the loop and go to the next SJ if it finds NMD
-          #and, count and save the NMD-associated SJ
+          NMD <- check_NMD(transcript, se$exon_number, gene_cds_gr)
+          if (NMD == "yes") {
+            print("NMD!")
+            if (nrow(sj_NMD) > 0) {rbind(sj_NMD, data.frame(sj_pc[1]))}
+            else {sj_NMD <- data.frame(sj_pc[1])}
+            }
+          else {print("no NMD!")}
         }
       }
     }
