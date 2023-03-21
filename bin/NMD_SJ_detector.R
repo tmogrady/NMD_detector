@@ -5,11 +5,8 @@ library("GenomicRanges")
 library("GenomicFeatures")
 library("rtracklayer")
 library("BSgenome.Hsapiens.UCSC.hg38")
-#library("ensembldb")
-#library("EnsDb.Hsapiens.v86") #most recent version available
 
 #functions ####
-
 check_NMD <- function(transcript, exons, gene_gr) {
   #get GRanges object for transcript CDS exons
   trans_gr <- gene_cds_gr[gene_cds_gr$transcript_id == transcript]
@@ -28,7 +25,6 @@ check_NMD <- function(transcript, exons, gene_gr) {
   trans_se_seq_aa <- translate(trans_se_seq_uni)
   #for now assume that the last CDS exon is the last exon
   #(otherwise it might be NMD-triggering anyways)
-  
   #get aa position of first *
   #reverse translate that to nucleotide position
   ptc_pos <- (unlist(gregexpr("\\*", trans_se_seq_aa))[1])*3
@@ -38,7 +34,6 @@ check_NMD <- function(transcript, exons, gene_gr) {
   for (i in 1:length(exon_sizes)-1) {
     exon_starts <- append(exon_starts, exon_starts[i] + exon_sizes[i])
   }
-  #print(exon_starts)
   if (any(ptc_pos < (exon_starts - 50))) {
     return("yes")
   } else {
@@ -65,7 +60,7 @@ sj_gr <- makeGRangesFromDataFrame(sj, keep.extra.columns = TRUE)
 ann_gtf <- import("/Applications/Genomics_applications/Genomes_and_transcriptomes/hg38_plus_Akata_inverted.gtf")
 ann_gtf_gene <- ann_gtf[mcols(ann_gtf)$type == "gene"]
 
-#get genes that contain detected SJs
+#get genes that contain detected SJs ####
 ovrlp <- findOverlaps(sj_gr, ann_gtf_gene, type = "within", select = "first")
 #later consider how to handle SJs within multiple genes (not common)
 sj_ann <- sj_gr
@@ -98,13 +93,8 @@ transcript_df <- gene_df %>%
 #eventually, put this all in a big for loop based on sj_pc
 #and generate gene_df and transcripts from the info in each line of sj_pc
 
-#not doing anything with these yet
-#but will eventually need a place to put the SJs that have been checked
-sj_NMD <- data.frame(seqnames=NA, start=NA, end=NA, width=NA, 
-                     strand=NA, motif=NA, ann=NA, unique=c(), multi=c(), 
-                     overhang=c(), gene_id=c(), gene_biotype=c())
 sj_NMD <- data.frame()
-sj_no_NMD <- data.frame()
+sj_no_NMD <- data.frame() #not doing anything with this yet. Worth keeping?
 
 for (transcript in transcripts) { #go through each transcript
   if (is.na(transcript)) { #ignore gene lines (NA in transcript field). Though actually shouldn't be any
