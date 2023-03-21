@@ -17,7 +17,7 @@ check_NMD <- function(transcript, exons, gene_gr) {
   trans_full_seq <- getSeq(Hsapiens, trans_gr)
   #remove skipped exons from transcript's set of exons
   used_exons <- c(1:length(trans_full_seq))
-  used_exons <- used_exons[!used_exons %in% ses ]
+  used_exons <- used_exons[!used_exons %in% exons]
   trans_se_seq <- trans_full_seq[used_exons]
   #put together the exons to get the AS isoform sequence:
   trans_se_seq_uni <- ""
