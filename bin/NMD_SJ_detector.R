@@ -72,40 +72,11 @@ sj_ann$gene_biotype <- ann_gtf$gene_biotype[ovrlp]
 sj_ann <- sj_ann[!is.na(sj_ann$gene_id)]
 sj_pc <- sj_ann[sj_ann$gene_biotype == "protein_coding"]
 
-#next, for each SJ & gene combo,
+#test each SJ for NMD ####
+#for each SJ & gene combo,
 #run through the possible transcripts and check for NMD triggering
-#this is the first (annotated, protein-coding) example SJ's gene:
-gene_gr <- ann_gtf[ann_gtf$gene_id == "ENSG00000122435"]
-#get only CDS. That's what we need
-#and this will avoid NA errors later when subsetting on transcript
-gene_cds_gr <- gene_gr[gene_gr$type == "CDS"]
-#move to dataframes because they're easier and avoid GRanges metadata NA problem
-gene_df <- data.frame(gene_cds_gr)
-transcripts <- unique(gene_df$transcript_id)
-transcript_df <- gene_df %>%
-  filter(transcript_id == "ENST00000370141") %>%
-  filter(type == "CDS")
-
-#input going into this for loop:
-     #transcripts: list of transcripts (in one gene that has been identified as containing an SJ; e.g. one gene from sj_pc)
-     #gene_df: data frame of gtf rows for that gene
-     #sj_pc[1]: a detected splice junction and the gene it's in
-#eventually, put this all in a big for loop based on sj_pc
-#and generate gene_df and transcripts from the info in each line of sj_pc
-
 sj_NMD <- data.frame()
-sj_no_NMD <- data.frame() #not doing anything with this yet. Worth keeping?
-
-for (i in 1:length(sj_pc)) {
-  print(i)
-  print(start(sj_pc[i]))
-  print(sj_pc[i]$gene_id)
-  gene_gr <- ann_gtf[ann_gtf$gene_id == sj_pc[i]$gene_id]
-  gene_cds_gr <- gene_gr[gene_gr$type == "CDS"]
-  gene_df <- data.frame(gene_cds_gr)
-  transcripts <- unique(gene_df$transcript_id)
-}
-
+sj_no_NMD <- data.frame() #not doing anything with this yet. Add later.
 
 for (i in 1:length(sj_pc)) {
   #need to get gene_df and transcripts list here
@@ -185,65 +156,21 @@ for (i in 1:length(sj_pc)) {
   }
 }
 
-for (transcript in transcripts) { #go through each transcript
-  if (is.na(transcript)) { #ignore gene lines (NA in transcript field). Though actually shouldn't be any
-    next
-  } else {
-    print(transcript)
-    transcript_df <- gene_df %>%
-      filter(transcript_id == transcript) %>%
-      filter(type == "CDS")
-    if (nrow(transcript_df) == 0) {
-      print(paste(transcript, "has no CDS"))
-      next
-    } else { #if the transcript is coding, look further
-      relevant <- data.frame() #set up a df for relevant exons
-      for (i in 1:nrow(transcript_df)) {
-        if (nrow(relevant) == 0) { #look for matching sj donor
-          if (start(sj_pc[1])-1 == transcript_df[i,3]) {
-            relevant <- transcript_df[i,] #SJ donor is a relevant exon. Add it.
-          } else {
-            next
-          }
-        } else { #if there is content in "relevant" (i.e. we've found a matching donor)
-          if (end(sj_pc[1])+1 == transcript_df[i,2]) { #look for matching acceptor
-            relevant <- rbind(relevant, transcript_df[i,])
-            break #if matching acceptor is found, we have all the exons we need
-          } else {
-            relevant <- rbind(relevant, transcript_df[i,])
-          }
-        }
-      }
-    } #end of transcript
-    if (nrow(relevant) == 0 | (end(sj_pc[1])+1 != relevant[nrow(relevant),2])) {
-      print("splice sites not annotated in this transcript") #ignore for now
-    }  else {
-      if (nrow(relevant) == 2) {
-        print("annotated SJ: no new SE") #assume no NMD
-      } else {
-        se <- relevant[2:(nrow(relevant) - 1), ]
-        se$exon_length <- se$end - se$start + 1 #could use width column here
-        if (sum(se$exon_length) %% 3 == 0) { #in-frame: assume no NMD
-          print("new in frame SE")
-        } else {
-          print(paste("new out-of-frame SE:", sum(se$exon_length), "nt"))
-          NMD <- check_NMD(transcript, se$exon_number, gene_cds_gr)
-          if (NMD == "yes") {
-            print("NMD!")
-            if (nrow(sj_NMD) > 0) {rbind(sj_NMD, data.frame(sj_pc[1]))}
-            else {sj_NMD <- data.frame(sj_pc[1])}
-            }
-          else {print("no NMD!")}
-        }
-      }
-    }
-  }
-}
 
+#test code ####
+#to delete once function/loop is better tested
+#this is the first (annotated, protein-coding) example SJ's gene:
+gene_gr <- ann_gtf[ann_gtf$gene_id == "ENSG00000122435"]
+#get only CDS. That's what we need
+#and this will avoid NA errors later when subsetting on transcript
+gene_cds_gr <- gene_gr[gene_gr$type == "CDS"]
+#move to dataframes because they're easier and avoid GRanges metadata NA problem
+gene_df <- data.frame(gene_cds_gr)
+transcripts <- unique(gene_df$transcript_id)
+transcript_df <- gene_df %>%
+  filter(transcript_id == "ENST00000370141") %>%
+  filter(type == "CDS")
 
-#code contributing to check_NMD function:
-#to delete once function is better tested
-#make a function given transcript name, exon number(s) and gene_cds_gr
 #transcript = "ENST00000482437"
 transcript = "ENST00000370143"
 ses = se$exon_number
