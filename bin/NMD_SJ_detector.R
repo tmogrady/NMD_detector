@@ -169,10 +169,12 @@ for (i in 1:length(sj_pc)) {
                 print(paste("which already contains", nrow(sj_NMD), "SJ(s)") )
                 sj_NMD <- rbind(sj_NMD, data.frame(sj_pc[i]))
                 print(paste("now it contains", nrow(sj_NMD), "SJs") )
+                break
                 }
               else {
                 print("starting df of NMD SJs")
                 sj_NMD <- data.frame(sj_pc[i])
+                break
                 }
             }
             else {print("no NMD!")}
