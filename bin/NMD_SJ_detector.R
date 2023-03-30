@@ -96,6 +96,93 @@ transcript_df <- gene_df %>%
 sj_NMD <- data.frame()
 sj_no_NMD <- data.frame() #not doing anything with this yet. Worth keeping?
 
+for (i in 1:length(sj_pc)) {
+  print(i)
+  print(start(sj_pc[i]))
+  print(sj_pc[i]$gene_id)
+  gene_gr <- ann_gtf[ann_gtf$gene_id == sj_pc[i]$gene_id]
+  gene_cds_gr <- gene_gr[gene_gr$type == "CDS"]
+  gene_df <- data.frame(gene_cds_gr)
+  transcripts <- unique(gene_df$transcript_id)
+}
+
+
+for (i in 1:length(sj_pc)) {
+  #need to get gene_df and transcripts list here
+  print(i)
+  print(sj_pc[i]$gene_id)
+  gene_gr <- ann_gtf[ann_gtf$gene_id == sj_pc[i]$gene_id]
+  gene_cds_gr <- gene_gr[gene_gr$type == "CDS"]
+  gene_df <- data.frame(gene_cds_gr)
+  transcripts <- unique(gene_df$transcript_id)
+  for (transcript in transcripts) { #go through each transcript
+    if (is.na(transcript)) { #ignore gene lines (NA in transcript field). Though actually shouldn't be any
+      next
+    } else {
+      print(transcript)
+      transcript_df <- gene_df %>%
+        filter(transcript_id == transcript) %>%
+        filter(type == "CDS")
+      if (nrow(transcript_df) == 0) {
+        print(paste(transcript, "has no CDS"))
+        next
+      } else { #if the transcript is coding, look further
+        relevant <- data.frame() #set up a df for relevant exons
+        for (j in 1:nrow(transcript_df)) {
+          if (nrow(relevant) == 0) { #look for matching sj donor
+            if (start(sj_pc[i])-1 == transcript_df[j,3]) {
+              relevant <- transcript_df[j,] #SJ donor is a relevant exon. Add it.
+            } else {
+              next
+            }
+          } else { #if there is content in "relevant" (i.e. we've found a matching donor)
+            if (end(sj_pc[i])+1 == transcript_df[j,2]) { #look for matching acceptor
+              relevant <- rbind(relevant, transcript_df[j,])
+              break #if matching acceptor is found, we have all the exons we need
+            } else {
+              relevant <- rbind(relevant, transcript_df[j,])
+            }
+          }
+        }
+      } #end of transcript
+      if (nrow(relevant) == 0) {
+        print("splice junction either fully annotated or splice sites unannotated: assume no NMD") #ignore for now
+      }  
+      else if (end(sj_pc[i])+1 != relevant[nrow(relevant),2]) { 
+        print("splice sites not annotated in this transcript") #ignore for now
+      }
+      else {
+        if (nrow(relevant) == 2) {
+          print("annotated SJ: no new SE") #assume no NMD
+        } else {
+          se <- relevant[2:(nrow(relevant) - 1), ]
+          se$exon_length <- se$end - se$start + 1 #could use width column here
+          if (sum(se$exon_length) %% 3 == 0) { #in-frame: assume no NMD
+            print("new in frame SE")
+          } else {
+            print(paste("new out-of-frame SE:", sum(se$exon_length), "nt"))
+            NMD <- check_NMD(transcript, se$exon_number, gene_cds_gr)
+            if (NMD == "yes") {
+              print("NMD!") #should break here for efficiency: go to next SJ
+              if (nrow(sj_NMD) > 0) {
+                print("adding to df of NMD SJs")
+                print(paste("which already contains", nrow(sj_NMD), "SJ(s)") )
+                sj_NMD <- rbind(sj_NMD, data.frame(sj_pc[i]))
+                print(paste("now it contains", nrow(sj_NMD), "SJs") )
+                }
+              else {
+                print("starting df of NMD SJs")
+                sj_NMD <- data.frame(sj_pc[i])
+                }
+            }
+            else {print("no NMD!")}
+          }
+        }
+      }
+    }
+  }
+}
+
 for (transcript in transcripts) { #go through each transcript
   if (is.na(transcript)) { #ignore gene lines (NA in transcript field). Though actually shouldn't be any
     next
@@ -156,7 +243,7 @@ for (transcript in transcripts) { #go through each transcript
 #to delete once function is better tested
 #make a function given transcript name, exon number(s) and gene_cds_gr
 #transcript = "ENST00000482437"
-transcript = "ENST00000370141"
+transcript = "ENST00000370143"
 ses = se$exon_number
 
 #get GRanges object for transcript CDS exons
