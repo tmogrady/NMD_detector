@@ -145,6 +145,7 @@ for (i in 1:length(sj_pc)) {
               else {
                 print("starting df of NMD SJs")
                 sj_NMD <- data.frame(sj_pc[i])
+                #note: should add gene name to the list of NMD-SJs
                 break
                 }
             }
@@ -156,6 +157,13 @@ for (i in 1:length(sj_pc)) {
   }
 }
 
+#should produce other lists as well:
+#    in-frame SJs
+#    out-of-frame SJs that don't meet NMD rules
+#    SJs that aren't assessed for NMD (intergenic or with unannotated sites)
+# and maybe a chart to compare numbers? Yes, probably
+# one with numbers of junctions, one with junction read depth (maybe distribution?)
+# also allow filtering by read number or maybe TPM (would require more input)
 
 #test code ####
 #to delete once function/loop is better tested
