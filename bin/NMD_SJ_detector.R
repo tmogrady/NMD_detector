@@ -81,6 +81,9 @@ intrgn <- which(is.na(ovrlp))
 sj_notann <- sj_gr[intrgn]
 sj_notann_df <- data.frame(sj_notann) #maybe not necessary
 
+#get SJs not in coding genes:
+sj_notPC <- sj_ann[sj_ann$gene_biotype != "protein_coding"]
+sj_notPC_df <- data.frame(sj_notPC) #maybe not necessary to df
 
 #test each SJ for NMD ####
 #for each SJ & gene combo,
