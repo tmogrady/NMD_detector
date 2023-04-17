@@ -64,24 +64,26 @@ ann_gtf_gene <- ann_gtf[mcols(ann_gtf)$type == "gene"]
 #get genes that contain detected SJs ####
 ovrlp <- findOverlaps(sj_gr, ann_gtf_gene, type = "within", select = "first")
 #gives index in ann_gtf_gene for each SJ
-#will have NAs for SJs in unannotated regions
+#has NAs for SJs in unannotated regions
 #later consider how to handle SJs within multiple genes (not common)
+
+#get the annotated SJs:
 sj_ann <- sj_gr
 sj_ann$gene_id <- ann_gtf_gene$gene_id[ovrlp]
 sj_ann$gene_name <- ann_gtf_gene$gene_name[ovrlp]
 sj_ann$gene_biotype <- ann_gtf$gene_biotype[ovrlp]
-#here filter to only protein-coding (maybe count and report others later)
+#here filter to only protein-coding
 #first remove SJs not in annotated genes
 #because they don't have ORF information, and to avoid later error with NAs
 sj_ann <- sj_ann[!is.na(sj_ann$gene_id)]
 sj_pc <- sj_ann[sj_ann$gene_biotype == "protein_coding"]
 
-#get intergenic SJs:
+#get intergenic SJs to report:
 intrgn <- which(is.na(ovrlp))
 sj_notann <- sj_gr[intrgn]
 sj_notann_df <- data.frame(sj_notann) #maybe not necessary
 
-#get SJs not in coding genes:
+#get SJs not in coding genes to report:
 sj_notPC <- sj_ann[sj_ann$gene_biotype != "protein_coding"]
 sj_notPC_df <- data.frame(sj_notPC) #maybe not necessary to df
 
