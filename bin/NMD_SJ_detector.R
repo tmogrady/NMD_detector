@@ -63,6 +63,8 @@ ann_gtf_gene <- ann_gtf[mcols(ann_gtf)$type == "gene"]
 
 #get genes that contain detected SJs ####
 ovrlp <- findOverlaps(sj_gr, ann_gtf_gene, type = "within", select = "first")
+#gives index in ann_gtf_gene for each SJ
+#will have NAs for SJs in unannotated regions
 #later consider how to handle SJs within multiple genes (not common)
 sj_ann <- sj_gr
 sj_ann$gene_id <- ann_gtf_gene$gene_id[ovrlp]
@@ -73,6 +75,12 @@ sj_ann$gene_biotype <- ann_gtf$gene_biotype[ovrlp]
 #because they don't have ORF information, and to avoid later error with NAs
 sj_ann <- sj_ann[!is.na(sj_ann$gene_id)]
 sj_pc <- sj_ann[sj_ann$gene_biotype == "protein_coding"]
+
+#get intergenic SJs:
+intrgn <- which(is.na(ovrlp))
+sj_notann <- sj_gr[intrgn]
+sj_notann_df <- data.frame(sj_notann) #maybe not necessary
+
 
 #test each SJ for NMD ####
 #for each SJ & gene combo,
