@@ -57,6 +57,7 @@ sj <- sj %>%
 sj_gr <- makeGRangesFromDataFrame(sj, keep.extra.columns = TRUE)
 
 #get annotation (gtf)
+#should get this from a package instead of a gtf file (or have option)
 ann_gtf <- import("/Applications/Genomics_applications/Genomes_and_transcriptomes/hg38_plus_Akata_inverted.gtf")
 ann_gtf_gene <- ann_gtf[mcols(ann_gtf)$type == "gene"]
 
@@ -95,6 +96,8 @@ for (i in 1:length(sj_pc)) {
       transcript_df <- gene_df %>%
         filter(transcript_id == transcript) %>%
         filter(type == "CDS")
+      
+      #if the transcript is coding, get skipped exons:
       if (nrow(transcript_df) == 0) {
         print(paste(transcript, "has no CDS"))
         next
@@ -117,6 +120,8 @@ for (i in 1:length(sj_pc)) {
           }
         }
       } #end of transcript
+      
+      #if there are skipped exons, check annotation status:
       if (nrow(relevant) == 0) {
         print("splice junction either fully annotated or splice sites unannotated: assume no NMD") #ignore for now
       }  
@@ -129,11 +134,15 @@ for (i in 1:length(sj_pc)) {
         } else {
           se <- relevant[2:(nrow(relevant) - 1), ]
           se$exon_length <- se$end - se$start + 1 #could use width column here
+          
+          #if splice sites are annotated but junction isn't, check frame:
           if (sum(se$exon_length) %% 3 == 0) { #in-frame: assume no NMD
             print("new in frame SE")
           } else {
             print(paste("new out-of-frame SE:", sum(se$exon_length), "nt"))
             NMD <- check_NMD(transcript, se$exon_number, gene_cds_gr)
+            
+            #if SJ triggers NMD, print it. If not, check next transcript
             if (NMD == "yes") {
               print("NMD!") #should break here for efficiency: go to next SJ
               if (nrow(sj_NMD) > 0) {
@@ -166,6 +175,7 @@ for (i in 1:length(sj_pc)) {
 # and maybe a chart to compare numbers? Yes, probably
 # one with numbers of junctions, one with junction read depth (maybe distribution?)
 # also allow filtering by read number or maybe TPM (would require more input)
+# plots at both SJ level and gene level
 
 #test code ####
 #to delete once function/loop is better tested
