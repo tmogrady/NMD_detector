@@ -78,10 +78,11 @@ sj_pc <- sj_ann[sj_ann$gene_biotype == "protein_coding"]
 #for each SJ & gene combo,
 #run through the possible transcripts and check for NMD triggering
 sj_NMD <- data.frame()
-sj_no_NMD <- data.frame() #not doing anything with this yet. Add later.
+sj_no_NMD <- data.frame()
 
 for (i in 1:length(sj_pc)) {
   #need to get gene_df and transcripts list here
+  NMD = "unknown"
   print(i)
   print(sj_pc[i]$gene_id)
   gene_gr <- ann_gtf[ann_gtf$gene_id == sj_pc[i]$gene_id]
@@ -155,7 +156,6 @@ for (i in 1:length(sj_pc)) {
               else {
                 print("starting df of NMD SJs")
                 sj_NMD <- data.frame(sj_pc[i])
-                #note: should add gene name to the list of NMD-SJs
                 break
                 }
             }
@@ -165,8 +165,24 @@ for (i in 1:length(sj_pc)) {
       }
     }
   }
+  
+  #once all the transcripts are checked, if no NMD is found add the SJ to the no-NMD list
+  if (NMD != "yes") {
+    if (nrow(sj_no_NMD) > 0) {
+      print("adding to df of no-NMD SJs")
+      print(paste("which already contains", nrow(sj_no_NMD), "SJ(s)") )
+      sj_no_NMD <- rbind(sj_no_NMD, data.frame(sj_pc[i]))
+      print(paste("now it contains", nrow(sj_no_NMD), "SJs") )
+    }
+    else {
+      print("starting df of no-NMD SJs")
+      sj_no_NMD <- data.frame(sj_pc[i])
+    }
+  }
 }
-#output of this loop: sj_NMD (df of SJs that are likely NMD targets)
+#output of this loop: 
+#     sj_NMD (df of SJs that are likely NMD targets)
+#     sj_no_NMD (df of SJs with annotated splice sites in coding genes that are not likely NMD targets)
 
 #should produce other lists as well:
 #    in-frame SJs
