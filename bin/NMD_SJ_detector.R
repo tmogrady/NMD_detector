@@ -65,6 +65,7 @@ ovrlp <- findOverlaps(sj_gr, ann_gtf_gene, type = "within", select = "first")
 #later consider how to handle SJs within multiple genes (not common)
 sj_ann <- sj_gr
 sj_ann$gene_id <- ann_gtf_gene$gene_id[ovrlp]
+sj_ann$gene_name <- ann_gtf_gene$gene_name[ovrlp]
 sj_ann$gene_biotype <- ann_gtf$gene_biotype[ovrlp]
 #here filter to only protein-coding (maybe count and report others later)
 #first remove SJs not in annotated genes
@@ -156,6 +157,7 @@ for (i in 1:length(sj_pc)) {
     }
   }
 }
+#output of this loop: sj_NMD (df of SJs that are likely NMD targets)
 
 #should produce other lists as well:
 #    in-frame SJs
