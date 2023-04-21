@@ -136,20 +136,20 @@ for (i in 1:length(sj_pc)) {
       } #end of transcript
       
       #if there are skipped exons, check annotation status:
-      if (nrow(relevant) == 0) {
-        print("splice junction either fully annotated or splice sites unannotated: assume no NMD") #ignore for now
-      }  
+      if (nrow(relevant) < 2) {
+        print("one or both splice sites unannotated: not assessed") #ignore for now
+      }  #check if acceptor is annotated
       else if (end(sj_pc[i])+1 != relevant[nrow(relevant),2]) { 
-        print("splice sites not annotated in this transcript") #ignore for now
+        print("one splice site unannotated: not assessed") #ignore for now
       }
       else {
         if (nrow(relevant) == 2) {
-          print("annotated SJ: no new SE") #assume no NMD
+          print("No skipped exon in this transcript: assume no NMD") #assume no NMD
         } else {
-          se <- relevant[2:(nrow(relevant) - 1), ]
+          se <- relevant[2:(nrow(relevant) - 1), ] #extract skipped exons
           se$exon_length <- se$end - se$start + 1 #could use width column here
           
-          #if splice sites are annotated but junction isn't, check frame:
+          #splice sites are annotated but junction isn't, so check frame:
           if (sum(se$exon_length) %% 3 == 0) { #in-frame: assume no NMD
             print("new in frame SE")
           } else {
