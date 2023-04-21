@@ -54,7 +54,7 @@ colnames(sj) <- c("chr","start","end","strand","motif","ann","unique","multi","o
 sj <- sj %>%
   mutate(strand = ifelse(strand == 1, "+",
                          ifelse(strand == 2, "-",
-                                strand)))
+                                "*"))
 #make SJ data a GRanges object
 sj_gr <- makeGRangesFromDataFrame(sj, keep.extra.columns = TRUE)
 
