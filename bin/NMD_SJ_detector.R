@@ -5,6 +5,7 @@ library("GenomicRanges")
 library("GenomicFeatures")
 library("rtracklayer")
 library("BSgenome.Hsapiens.UCSC.hg38")
+library("ggplot2")
 
 #functions ####
 check_NMD <- function(transcript, exons, gene_gr) {
@@ -205,6 +206,28 @@ for (i in 1:length(sj_pc)) {
 # one with numbers of junctions, one with junction read depth (maybe distribution?)
 # also allow filtering by read number or maybe TPM (would require more input)
 # plots at both SJ level and gene level
+
+#simple bargraph for single sample
+#later will do a vesrion with multiple samples
+type_sum <- data.frame(
+  dataset = c(1,1,1,1),
+  type = c("intergenic", "noncoding", "NMD", "no_NMD"),
+  count = c(nrow(sj_notann_df), nrow(sj_notPC_df), nrow(sj_NMD), nrow(sj_no_NMD)),
+  reads_unique = c(sum(sj_notann_df$unique), sum(sj_notPC_df$unique), sum(sj_NMD$unique), sum(sj_no_NMD$unique)),
+  reads_multi = c(sum(sj_notann_df$multi), sum(sj_notPC_df$multi), sum(sj_NMD$multi), sum(sj_no_NMD$multi))
+)
+
+type_sum$type <- factor(type_sum$type, levels = c("no_NMD", "intergenic", "noncoding","NMD"))
+
+ggplot(type_sum, aes(x=dataset, y=count, fill = type)) +
+  geom_bar(stat = "identity") +
+  ylab("Number of splice junctions") +
+  theme_classic() +
+  theme(axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank())
+
 
 #test code ####
 #to delete once function/loop is better tested
