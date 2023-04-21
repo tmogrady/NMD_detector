@@ -45,7 +45,8 @@ check_NMD <- function(transcript, exons, gene_gr) {
 
 #read in data ####
 #read in STAR SJ.out.tab file
-sj <- read.table("input_data/MC1_truncated_test-SJ.out.tab")
+#sj <- read.table("input_data/MC1_truncated_test-SJ.out.tab")
+sj <- read.table("../temp/MC1_S34_L004_R1_001_MC1_S34_L004_R2_001.hg38plusAkata_inverted-SJ.out.tab")
 
 #name columns for GRanges (and my own sanity)
 colnames(sj) <- c("chr","start","end","strand","motif","ann","unique","multi","overhang")
