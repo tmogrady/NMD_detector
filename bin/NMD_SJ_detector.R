@@ -12,7 +12,7 @@ check_NMD <- function(transcript, exons, gene_gr) {
   #get GRanges object for transcript CDS exons
   trans_gr <- gene_cds_gr[gene_cds_gr$transcript_id == transcript]
   #get sequence of the (annotated) transcript
-  trans_full_seq <- getSeq(Hsapiens, trans_gr)
+  trans_full_seq <- suppressWarnings(getSeq(Hsapiens, trans_gr))
   #remove skipped exons from transcript's set of exons
   used_exons <- c(1:length(trans_full_seq))
   used_exons <- used_exons[!used_exons %in% exons]
@@ -23,7 +23,7 @@ check_NMD <- function(transcript, exons, gene_gr) {
     trans_se_seq_uni <- paste(trans_se_seq_uni, as.character(trans_se_seq[i]), sep = "")
   }
   trans_se_seq_uni <- DNAString(trans_se_seq_uni)
-  trans_se_seq_aa <- translate(trans_se_seq_uni)
+  trans_se_seq_aa <- suppressWarnings(translate(trans_se_seq_uni))
   #for now assume that the last CDS exon is the last exon
   #(otherwise it might be NMD-triggering anyways)
   #get aa position of first *
@@ -46,7 +46,7 @@ check_NMD <- function(transcript, exons, gene_gr) {
 #read in data ####
 #read in STAR SJ.out.tab file
 sj <- read.table("input_data/MC1_truncated_test-SJ.out.tab")
-sj <- read.table("../temp/MC1_S34_L004_R1_001_MC1_S34_L004_R2_001.hg38plusAkata_inverted-SJ.out.tab")
+#sj <- read.table("../temp/MC1_S34_L004_R1_001_MC1_S34_L004_R2_001.hg38plusAkata_inverted-SJ.out.tab")
 
 #name columns for GRanges (and my own sanity)
 colnames(sj) <- c("chr","start","end","strand","motif","ann","unique","multi","overhang")
@@ -254,6 +254,7 @@ ses = se$exon_number
 trans_gr <- gene_cds_gr[gene_cds_gr$transcript_id == transcript]
 #get sequence of the (annotated) transcript
 trans_full_seq <- getSeq(Hsapiens, trans_gr)
+trans_full_seq <- suppressWarnings(getSeq(Hsapiens, trans_gr))
 
 #remove skipped exons from transcript's set of exons
 used_exons <- c(1:length(trans_full_seq))
