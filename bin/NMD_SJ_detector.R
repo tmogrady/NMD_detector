@@ -42,6 +42,10 @@ check_NMD <- function(transcript, exons, gene_gr) {
   }
 }
 
+#set parameters ####
+#number of unique reads required to consider junctions
+#later maybe normalize to read depth (sj reads per million?)
+sj_thres <- 1
 
 #read in data ####
 #read in STAR SJ.out.tab file
@@ -55,8 +59,12 @@ sj <- sj %>%
   mutate(strand = ifelse(strand == 1, "+",
                          ifelse(strand == 2, "-",
                                 "*")))
+
+sj_filt <- sj %>%
+  filter(unique >= sj_thres)
+
 #make SJ data a GRanges object
-sj_gr <- makeGRangesFromDataFrame(sj, keep.extra.columns = TRUE)
+sj_gr <- makeGRangesFromDataFrame(sj_filt, keep.extra.columns = TRUE)
 
 #get annotation (gtf)
 #should get this from a package instead of a gtf file (or have option)
