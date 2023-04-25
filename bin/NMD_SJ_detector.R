@@ -238,6 +238,15 @@ ggplot(type_sum, aes(x=dataset, y=count, fill = type)) +
         axis.text.x = element_blank(),
         legend.title = element_blank())
 
+ggplot(type_sum, aes(x=dataset, y=reads_unique, fill = type)) +
+  geom_bar(stat = "identity") +
+  ylab("Number of uniquely-mapped splice junction reads") +
+  theme_classic() +
+  theme(axis.title.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_blank())
+
 
 #test code ####
 #to delete once function/loop is better tested
