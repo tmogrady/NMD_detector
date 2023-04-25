@@ -45,12 +45,12 @@ check_NMD <- function(transcript, exons, gene_gr) {
 #set parameters ####
 #number of unique reads required to consider junctions
 #later maybe normalize to read depth (sj reads per million?)
-sj_thres <- 1
+sj_thres <- 10000
 
 #read in data ####
 #read in STAR SJ.out.tab file
 sj <- read.table("input_data/MC1_truncated_test-SJ.out.tab")
-#sj <- read.table("../temp/MC1_S34_L004_R1_001_MC1_S34_L004_R2_001.hg38plusAkata_inverted-SJ.out.tab")
+sj <- read.table("../temp/MC1_S34_L004_R1_001_MC1_S34_L004_R2_001.hg38plusAkata_inverted-SJ.out.tab")
 
 #name columns for GRanges (and my own sanity)
 colnames(sj) <- c("chr","start","end","strand","motif","ann","unique","multi","overhang")
@@ -59,7 +59,6 @@ sj <- sj %>%
   mutate(strand = ifelse(strand == 1, "+",
                          ifelse(strand == 2, "-",
                                 "*")))
-
 sj_filt <- sj %>%
   filter(unique >= sj_thres)
 
