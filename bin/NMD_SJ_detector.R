@@ -6,6 +6,8 @@ library("GenomicFeatures")
 library("rtracklayer")
 library("BSgenome.Hsapiens.UCSC.hg38")
 library("ggplot2")
+library("foreach")
+library("doParallel")
 
 #functions ####
 check_NMD <- function(transcript, exons, gene_gr) {
@@ -45,7 +47,7 @@ check_NMD <- function(transcript, exons, gene_gr) {
 #set parameters ####
 #number of unique reads required to consider junctions
 #later maybe normalize to read depth (sj reads per million?)
-sj_thres <- 1
+sj_thres <- 10000
 
 #read in data ####
 #read in STAR SJ.out.tab file
