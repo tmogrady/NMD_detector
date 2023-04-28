@@ -168,23 +168,11 @@ for (i in 1:length(sj_pc)) {
             
             #if SJ triggers NMD, print it. If not, check next transcript
             if (NMD == "yes") {
-              #print("NMD!") #should break here for efficiency: go to next SJ
-              if (nrow(sj_NMD_or_no) > 0) { #this if/else probably unnecessary: can just rbind
-                #print("adding to df of NMD SJs")
-                #print(paste("which already contains", nrow(sj_NMD), "SJ(s)") )
-                new_row <- data.frame(sj_pc[i])
-                new_row$NMD <- "yes"
-                sj_NMD_or_no <- rbind(sj_NMD_or_no, new_row)
-                #print(paste("now it contains", nrow(sj_NMD), "SJs") )
-                break
-                }
-              else {
-                #print("starting df of NMD SJs")
-                new_row <- data.frame(sj_pc[i])
-                new_row$NMD <- "yes"
-                sj_NMD_or_no <- new_row
-                break
-                }
+              new_row <- data.frame(sj_pc[i])
+              new_row$NMD <- "yes"
+              sj_NMD_or_no <- rbind(sj_NMD_or_no, new_row)
+              #print(paste("now it contains", nrow(sj_NMD), "SJs") )
+              break
             }
             else {
               #print("no NMD!")
@@ -197,20 +185,9 @@ for (i in 1:length(sj_pc)) {
   
   #once all the transcripts are checked, if no NMD is found add the SJ to the no-NMD list
   if (NMD != "yes") {
-    if (nrow(sj_NMD_or_no) > 0) {
-      #print("adding to df of no-NMD SJs")
-      #print(paste("which already contains", nrow(sj_no_NMD), "SJ(s)") )
-      new_row <- data.frame(sj_pc[i])
-      new_row$NMD <- "no"
-      sj_NMD_or_no <- rbind(sj_NMD_or_no, new_row)
-      #print(paste("now it contains", nrow(sj_no_NMD), "SJs") )
-    }
-    else {
-      #print("starting df of no-NMD SJs")
-      new_row <- data.frame(sj_pc[i])
-      new_row$NMD <- "no"
-      sj_NMD_or_no <- new_row
-    }
+    new_row <- data.frame(sj_pc[i])
+    new_row$NMD <- "no"
+    sj_NMD_or_no <- rbind(sj_NMD_or_no, new_row)
   }
 }
 #output of this loop: 
