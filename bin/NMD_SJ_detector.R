@@ -45,7 +45,7 @@ check_NMD <- function(transcript, exons, gene_gr) {
 #set parameters ####
 #number of unique reads required to consider junctions
 #later maybe normalize to read depth (sj reads per million?)
-sj_thres <- 10000
+sj_thres <- 1
 
 #read in data ####
 #read in STAR SJ.out.tab file
@@ -99,8 +99,7 @@ sj_notPC_df <- data.frame(sj_notPC) #maybe not necessary to df
 #test each SJ for NMD ####
 #for each SJ & gene combo,
 #run through the possible transcripts and check for NMD triggering
-sj_NMD <- data.frame()
-sj_no_NMD <- data.frame()
+sj_NMD_or_no <- data.frame()
 
 for (i in 1:length(sj_pc)) {
   #need to get gene_df and transcripts list here
@@ -168,16 +167,20 @@ for (i in 1:length(sj_pc)) {
             #if SJ triggers NMD, print it. If not, check next transcript
             if (NMD == "yes") {
               #print("NMD!") #should break here for efficiency: go to next SJ
-              if (nrow(sj_NMD) > 0) {
+              if (nrow(sj_NMD_or_no) > 0) { #this if/else probably unnecessary: can just rbind
                 #print("adding to df of NMD SJs")
                 #print(paste("which already contains", nrow(sj_NMD), "SJ(s)") )
-                sj_NMD <- rbind(sj_NMD, data.frame(sj_pc[i]))
+                new_row <- data.frame(sj_pc[i])
+                new_row$NMD <- "yes"
+                sj_NMD_or_no <- rbind(sj_NMD_or_no, new_row)
                 #print(paste("now it contains", nrow(sj_NMD), "SJs") )
                 break
                 }
               else {
                 #print("starting df of NMD SJs")
-                sj_NMD <- data.frame(sj_pc[i])
+                new_row <- data.frame(sj_pc[i])
+                new_row$NMD <- "yes"
+                sj_NMD_or_no <- new_row
                 break
                 }
             }
@@ -192,15 +195,19 @@ for (i in 1:length(sj_pc)) {
   
   #once all the transcripts are checked, if no NMD is found add the SJ to the no-NMD list
   if (NMD != "yes") {
-    if (nrow(sj_no_NMD) > 0) {
+    if (nrow(sj_NMD_or_no) > 0) {
       #print("adding to df of no-NMD SJs")
       #print(paste("which already contains", nrow(sj_no_NMD), "SJ(s)") )
-      sj_no_NMD <- rbind(sj_no_NMD, data.frame(sj_pc[i]))
+      new_row <- data.frame(sj_pc[i])
+      new_row$NMD <- "no"
+      sj_NMD_or_no <- rbind(sj_NMD_or_no, new_row)
       #print(paste("now it contains", nrow(sj_no_NMD), "SJs") )
     }
     else {
       #print("starting df of no-NMD SJs")
-      sj_no_NMD <- data.frame(sj_pc[i])
+      new_row <- data.frame(sj_pc[i])
+      new_row$NMD <- "no"
+      sj_NMD_or_no <- new_row
     }
   }
 }
