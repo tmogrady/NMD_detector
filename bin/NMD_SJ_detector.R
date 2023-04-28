@@ -212,8 +212,9 @@ for (i in 1:length(sj_pc)) {
   }
 }
 #output of this loop: 
-#     sj_NMD (df of SJs that are likely NMD targets)
-#     sj_no_NMD (df of SJs with annotated splice sites in coding genes that are not likely NMD targets)
+#     sj_NMD_or_no (df of SJs in protein-coding genes, and whether or not they 
+#          are likely NMD-targeting)
+#maybe split this into two dfs to print out?
 
 #should produce other lists as well:
 #    in-frame SJs
@@ -225,7 +226,8 @@ for (i in 1:length(sj_pc)) {
 # plots at both SJ level and gene level
 
 #simple bargraph for single sample
-#later will do a vesrion with multiple samples
+#later will do a version with multiple samples
+#NEED TO UPDATE TO REFLECT COMBINED NMD/NO NMD DATAFRAME!!!
 type_sum <- data.frame(
   dataset = c(1,1,1,1),
   type = c("intergenic", "noncoding", "NMD", "no_NMD"),
