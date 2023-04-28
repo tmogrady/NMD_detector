@@ -47,7 +47,7 @@ check_NMD <- function(transcript, exons, gene_gr) {
 #set parameters ####
 #number of unique reads required to consider junctions
 #later maybe normalize to read depth (sj reads per million?)
-sj_thres <- 10000
+sj_thres <- 1
 
 #read in data ####
 #read in STAR SJ.out.tab file
@@ -99,8 +99,100 @@ sj_notPC <- sj_ann[sj_ann$gene_biotype != "protein_coding"]
 sj_notPC_df <- data.frame(sj_notPC) #maybe not necessary to df
 
 #test each SJ for NMD ####
+#first set up parallelization
+#trivial check:
+n.cores <- parallel::detectCores() - 1
+my.cluster <- parallel::makeCluster(
+  n.cores, 
+  type = "PSOCK"
+)
+doParallel::registerDoParallel(cl = my.cluster)
+some_numbers <- sample(1:1000, 100, replace=TRUE)
+classified_numbers <- foreach(
+  i = 1:length(some_numbers), 
+  .combine = 'rbind'
+) %dopar% {
+  if (some_numbers[i] < 500) {
+    data.frame("number" = some_numbers[i], "type" = "lower")
+  }
+  else {
+    data.frame("number" = some_numbers[i], "type" = "higher")
+  }
+}
+parallel::stopCluster(cl = my.cluster)
+#working
+
+n.cores <- parallel::detectCores() - 1
+my.cluster <- parallel::makeCluster(
+  n.cores, 
+  type = "PSOCK"
+)
+doParallel::registerDoParallel(cl = my.cluster)
+
 #for each SJ & gene combo,
 #run through the possible transcripts and check for NMD triggering
+sj_NMD_or_no <- foreach(
+  i = 1:length(sj_pc),
+  .combine = 'rbind'
+) %dopar% {
+  NMD = "unknown"
+  gene_gr <- ann_gtf[ann_gtf$gene_id == sj_pc[i]$gene_id]
+  gene_cds_gr <- gene_gr[gene_gr$type == "CDS"] #get coding transcripts of the gene
+  gene_df <- data.frame(gene_cds_gr)
+  transcripts <- unique(gene_df$transcript_id)
+  for (transcript in transcripts) { #check each coding transcript in this gene
+    transcript_df <- gene_df %>%
+      filter(transcript_id == transcript) %>%
+      filter(type == "CDS")
+    relevant <- data.frame() #set up a df for relevant exons
+    for (j in 1:nrow(transcript_df)) { #check each exon in this transcript
+      if (nrow(relevant) == 0) { #no donor found yet; look for one
+        if (start(sj_pc[i])-1 == transcript_df[j,3]) {
+          relevant <- transcript_df[j,] #SJ donor is a relevant exon. Add it.
+        } else { next }
+      } else { #if there is content in "relevant" (i.e. we've found a matching donor)
+        if (end(sj_pc[i])+1 == transcript_df[j,2]) { #look for matching acceptor
+          relevant <- rbind(relevant, transcript_df[j,])
+          break #if matching acceptor is found, we have all the exons we need
+        } else {
+          relevant <- rbind(relevant, transcript_df[j,]) #no acceptor yet: might be a SE
+        }
+      }
+    } #end of this transcript
+    #if there are skipped exons, check annotation status:
+    if (nrow(relevant) < 2) { next } #splice site not annotated; ignore for now
+    else if (end(sj_pc[i])+1 != relevant[nrow(relevant),2]) { next } #splice site not annotated; ignore for now
+    else {
+      if (nrow(relevant) == 2) { next } #fully annotated; ignore for now
+      else {
+        se <- relevant[2:(nrow(relevant) - 1), ] #extract skipped exons
+        se$exon_length <- se$end - se$start + 1 #get exon length. Could use width column instead
+        #splice sites are annotated but junction isn't, so check frame:
+        if (sum(se$exon_length) %% 3 == 0) { next } #in-frame: assume no NMD
+        else {
+          NMD <- check_NMD(transcript, se$exon_number, gene_cds_gr)
+          if (NMD == "yes") { #NMD. Add to output and move to next SJ
+            new_row <- data.frame(sj_pc[i])
+            new_row$NMD <- "yes"
+            #return(new_row)
+            break
+          }
+          else { next } #no NMD in this transcript, move to the next one
+        }
+      }
+    }
+  }
+  #once all the transcripts are checked, if no NMD is found add the SJ to the no-NMD list
+  if (NMD != "yes") {
+    new_row <- data.frame(sj_pc[i])
+    new_row$NMD <- "no"
+    #return(new_row)
+  }
+}
+#doesn't finish, even with small example. NEED TO TROUBLESHOOT
+parallel::stopCluster(cl = my.cluster)
+
+#old nonparallel:
 sj_NMD_or_no <- data.frame()
 
 for (i in 1:length(sj_pc)) {
@@ -190,6 +282,8 @@ for (i in 1:length(sj_pc)) {
     sj_NMD_or_no <- rbind(sj_NMD_or_no, new_row)
   }
 }
+
+
 #output of this loop: 
 #     sj_NMD_or_no (df of SJs in protein-coding genes, and whether or not they 
 #          are likely NMD-targeting)
