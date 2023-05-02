@@ -177,7 +177,7 @@ sj_NMD_or_no <- foreach(
           if (NMD == "yes") { #NMD. Add to output and move to next SJ
             new_row <- data.frame(sj_pc[i])
             new_row$NMD <- "yes"
-            new_row
+            return(new_row)
             break
           }
           else { next } #no NMD in this transcript, move to the next one
@@ -189,7 +189,7 @@ sj_NMD_or_no <- foreach(
   if (NMD != "yes") {
     new_row <- data.frame(sj_pc[i])
     new_row$NMD <- "no"
-    new_row
+    return(new_row)
   }
 }
 #doesn't finish, even with small example. NEED TO TROUBLESHOOT
