@@ -47,7 +47,7 @@ check_NMD <- function(transcript, exons, gene_gr) {
 #set parameters ####
 #number of unique reads required to consider junctions
 #later maybe normalize to read depth (sj reads per million?)
-sj_thres <- 1
+sj_thres <- 0
 
 #read in data ####
 #read in STAR SJ.out.tab file
@@ -170,7 +170,11 @@ sj_NMD_or_no <- foreach(
         #splice sites are annotated but junction isn't, so check frame:
         if (sum(se$exon_length) %% 3 == 0) { next } #in-frame: assume no NMD
         else {
-          NMD <- check_NMD(transcript, se$exon_number, gene_cds_gr)
+          #test: remove the call to check_NMD()
+          #NMD <- check_NMD(transcript, se$exon_number, gene_cds_gr)
+          #put in a meaningless test
+          if (chr == "chr1") { NMD == "yes" }
+          else {NMD == "no"}
           if (NMD == "yes") { #NMD. Add to output and move to next SJ
             new_row <- data.frame(sj_pc[i])
             new_row$NMD <- "yes"
