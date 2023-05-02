@@ -134,7 +134,7 @@ doParallel::registerDoParallel(cl = my.cluster)
 sj_NMD_or_no <- foreach(
   i = 1:length(sj_pc),
   .combine = 'rbind'
-) %dopar% {
+) %do% {
   NMD = "unknown"
   gene_gr <- ann_gtf[ann_gtf$gene_id == sj_pc[i]$gene_id]
   gene_cds_gr <- gene_gr[gene_gr$type == "CDS"] #get coding transcripts of the gene
@@ -173,8 +173,8 @@ sj_NMD_or_no <- foreach(
           #test: remove the call to check_NMD()
           #NMD <- check_NMD(transcript, se$exon_number, gene_cds_gr)
           #put in a meaningless test
-          if (chr == "chr1") { NMD == "yes" }
-          else {NMD == "no"}
+          if (i %% 2) { NMD = "yes" }
+          else {NMD = "no"}
           if (NMD == "yes") { #NMD. Add to output and move to next SJ
             new_row <- data.frame(sj_pc[i])
             new_row$NMD <- "yes"
