@@ -173,16 +173,11 @@ sj_NMD_or_no <- foreach(
         #splice sites are annotated but junction isn't, so check frame:
         if (sum(se$exon_length) %% 3 == 0) { next } #in-frame: assume no NMD
         else {
-          #test: remove the call to check_NMD()
-          #NMD <- check_NMD(transcript, se$exon_number, gene_cds_gr)
-          #put in a meaningless test
-          if (i %% 2) { NMD = "yes" }
-          else {NMD = "no"}
+          NMD <- check_NMD(transcript, se$exon_number, gene_cds_gr)
           if (NMD == "yes") { #NMD. Add to output and move to next SJ
             new_row <- data.frame(sj_pc[i])
             new_row$NMD <- "yes"
             new_row
-            #return(new_row)
             break
           }
           else { next } #no NMD in this transcript, move to the next one
@@ -195,7 +190,6 @@ sj_NMD_or_no <- foreach(
     new_row <- data.frame(sj_pc[i])
     new_row$NMD <- "no"
     new_row
-    #return(new_row)
   }
 }
 #doesn't finish, even with small example. NEED TO TROUBLESHOOT
