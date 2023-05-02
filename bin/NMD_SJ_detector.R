@@ -135,7 +135,8 @@ doParallel::registerDoParallel(cl = my.cluster)
 #run through the possible transcripts and check for NMD triggering
 sj_NMD_or_no <- foreach(
   i = 1:length(sj_pc),
-  .combine = 'rbind'
+  .combine = 'rbind',
+  .packages = c("dplyr", "GenomicRanges", "GenomicFeatures", "BSgenome.Hsapiens.UCSC.hg38")
 ) %dopar% {
   NMD = "unknown"
   gene_gr <- ann_gtf[ann_gtf$gene_id == sj_pc[i]$gene_id]
@@ -180,6 +181,7 @@ sj_NMD_or_no <- foreach(
           if (NMD == "yes") { #NMD. Add to output and move to next SJ
             new_row <- data.frame(sj_pc[i])
             new_row$NMD <- "yes"
+            new_row
             #return(new_row)
             break
           }
@@ -192,6 +194,7 @@ sj_NMD_or_no <- foreach(
   if (NMD != "yes") {
     new_row <- data.frame(sj_pc[i])
     new_row$NMD <- "no"
+    new_row
     #return(new_row)
   }
 }
