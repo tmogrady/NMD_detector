@@ -134,7 +134,7 @@ doParallel::registerDoParallel(cl = my.cluster)
 sj_NMD_or_no <- foreach(
   i = 1:length(sj_pc),
   .combine = 'rbind'
-) %do% {
+) %dopar% {
   NMD = "unknown"
   gene_gr <- ann_gtf[ann_gtf$gene_id == sj_pc[i]$gene_id]
   gene_cds_gr <- gene_gr[gene_gr$type == "CDS"] #get coding transcripts of the gene
