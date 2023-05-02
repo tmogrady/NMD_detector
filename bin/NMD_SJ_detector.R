@@ -113,10 +113,12 @@ classified_numbers <- foreach(
   .combine = 'rbind'
 ) %dopar% {
   if (some_numbers[i] < 500) {
-    data.frame("number" = some_numbers[i], "type" = "lower")
+    squareroot <- sqrt(some_numbers[i])
+    data.frame("number" = squareroot, "type" = "lower")
   }
   else {
-    data.frame("number" = some_numbers[i], "type" = "higher")
+    squareroot <- sqrt(some_numbers[i])
+    data.frame("number" = squareroot, "type" = "higher")
   }
 }
 parallel::stopCluster(cl = my.cluster)
