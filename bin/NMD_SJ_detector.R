@@ -100,30 +100,6 @@ sj_notPC_df <- data.frame(sj_notPC) #maybe not necessary to df
 
 #test each SJ for NMD ####
 #first set up parallelization
-# #trivial check:
-# n.cores <- parallel::detectCores() - 1
-# my.cluster <- parallel::makeCluster(
-#   n.cores, 
-#   type = "PSOCK"
-# )
-# doParallel::registerDoParallel(cl = my.cluster)
-# some_numbers <- sample(1:1000, 100, replace=TRUE)
-# classified_numbers <- foreach(
-#   i = 1:length(some_numbers), 
-#   .combine = 'rbind'
-# ) %dopar% {
-#   if (some_numbers[i] < 500) {
-#     squareroot <- sqrt(some_numbers[i])
-#     data.frame("number" = squareroot, "type" = "lower")
-#   }
-#   else {
-#     squareroot <- sqrt(some_numbers[i])
-#     data.frame("number" = squareroot, "type" = "higher")
-#   }
-# }
-# parallel::stopCluster(cl = my.cluster)
-# #working
-
 n.cores <- parallel::detectCores() - 1
 my.cluster <- parallel::makeCluster(
   n.cores, 
@@ -188,11 +164,11 @@ sj_NMD_or_no <- foreach(
   #once all the transcripts are checked, if no NMD is found add the SJ to the no-NMD list
   if (NMD != "yes") {
     new_row <- data.frame(sj_pc[i])
-    new_row$NMD <- "no"
+    new_row$NMD <- "no" #try new_row$NMD <- NMD. Could be "no" or "unknown" i.e. unassessed. Right?
     return(new_row)
   }
 }
-#doesn't finish, even with small example. NEED TO TROUBLESHOOT
+
 parallel::stopCluster(cl = my.cluster)
 
 #output of this loop: 
@@ -207,15 +183,12 @@ sj_no_NMD <- sj_NMD_or_no %>%
 #should produce other lists as well:
 #    in-frame SJs
 #    out-of-frame SJs that don't meet NMD rules
-#    SJs that aren't assessed for NMD (intergenic or with unannotated sites)
-# and maybe a chart to compare numbers? Yes, probably
-# one with numbers of junctions, one with junction read depth (maybe distribution?)
+#    SJs that aren't assessed for NMD (unannotated sites)
 # also allow filtering by read number or maybe TPM (would require more input)
 # plots at both SJ level and gene level
 
 #simple bargraph for single sample
 #later will do a version with multiple samples
-#NEED TO UPDATE TO REFLECT COMBINED NMD/NO NMD DATAFRAME!!!
 type_sum <- data.frame(
   dataset = c(1,1,1,1),
   type = c("intergenic", "noncoding", "NMD", "no_NMD"),
@@ -226,6 +199,7 @@ type_sum <- data.frame(
 
 type_sum$type <- factor(type_sum$type, levels = c("no_NMD", "intergenic", "noncoding","NMD"))
 
+#plot number of splice junctions
 ggplot(type_sum, aes(x=dataset, y=count, fill = type)) +
   geom_bar(stat = "identity") +
   ylab("Number of splice junctions") +
@@ -235,6 +209,7 @@ ggplot(type_sum, aes(x=dataset, y=count, fill = type)) +
         axis.text.x = element_blank(),
         legend.title = element_blank())
 
+#plot number of splice junction-spanning reads
 ggplot(type_sum, aes(x=dataset, y=reads_unique, fill = type)) +
   geom_bar(stat = "identity") +
   ylab("Number of uniquely-mapped splice junction reads") +
@@ -244,165 +219,7 @@ ggplot(type_sum, aes(x=dataset, y=reads_unique, fill = type)) +
         axis.text.x = element_blank(),
         legend.title = element_blank())
 
-
-
-# #old nonparallel:
-# sj_NMD_or_no <- data.frame()
-# 
-# for (i in 1:length(sj_pc)) {
-#   #need to get gene_df and transcripts list here
-#   NMD = "unknown"
-#   #print(i)
-#   #print(sj_pc[i]$gene_id)
-#   gene_gr <- ann_gtf[ann_gtf$gene_id == sj_pc[i]$gene_id]
-#   gene_cds_gr <- gene_gr[gene_gr$type == "CDS"]
-#   gene_df <- data.frame(gene_cds_gr)
-#   transcripts <- unique(gene_df$transcript_id)
-#   for (transcript in transcripts) { #go through each transcript
-#     if (is.na(transcript)) { #ignore gene lines (NA in transcript field). Though actually shouldn't be any
-#       next
-#     } else {
-#       #print(transcript)
-#       transcript_df <- gene_df %>%
-#         filter(transcript_id == transcript) %>%
-#         filter(type == "CDS")
-#       
-#       #if the transcript is coding, get skipped exons:
-#       if (nrow(transcript_df) == 0) {
-#         #print(paste(transcript, "has no CDS"))
-#         next
-#       } else { #if the transcript is coding, look further
-#         relevant <- data.frame() #set up a df for relevant exons
-#         for (j in 1:nrow(transcript_df)) {
-#           if (nrow(relevant) == 0) { #look for matching sj donor
-#             if (start(sj_pc[i])-1 == transcript_df[j,3]) {
-#               relevant <- transcript_df[j,] #SJ donor is a relevant exon. Add it.
-#             } else {
-#               next
-#             }
-#           } else { #if there is content in "relevant" (i.e. we've found a matching donor)
-#             if (end(sj_pc[i])+1 == transcript_df[j,2]) { #look for matching acceptor
-#               relevant <- rbind(relevant, transcript_df[j,])
-#               break #if matching acceptor is found, we have all the exons we need
-#             } else {
-#               relevant <- rbind(relevant, transcript_df[j,])
-#             }
-#           }
-#         }
-#       } #end of transcript
-#       
-#       #if there are skipped exons, check annotation status:
-#       if (nrow(relevant) < 2) {
-#         #print("one or both splice sites unannotated: not assessed") #ignore for now
-#       }  #check if acceptor is annotated
-#       else if (end(sj_pc[i])+1 != relevant[nrow(relevant),2]) { 
-#         #print("one splice site unannotated: not assessed") #ignore for now
-#       }
-#       else {
-#         if (nrow(relevant) == 2) {
-#           #print("No skipped exon in this transcript: assume no NMD") #assume no NMD
-#         } else {
-#           se <- relevant[2:(nrow(relevant) - 1), ] #extract skipped exons
-#           se$exon_length <- se$end - se$start + 1 #could use width column here
-#           
-#           #splice sites are annotated but junction isn't, so check frame:
-#           if (sum(se$exon_length) %% 3 == 0) { #in-frame: assume no NMD
-#             #print("new in frame SE")
-#           } else {
-#             #print(paste("new out-of-frame SE:", sum(se$exon_length), "nt"))
-#             NMD <- check_NMD(transcript, se$exon_number, gene_cds_gr)
-#             
-#             #if SJ triggers NMD, print it. If not, check next transcript
-#             if (NMD == "yes") {
-#               new_row <- data.frame(sj_pc[i])
-#               new_row$NMD <- "yes"
-#               sj_NMD_or_no <- rbind(sj_NMD_or_no, new_row)
-#               #print(paste("now it contains", nrow(sj_NMD), "SJs") )
-#               break
-#             }
-#             else {
-#               #print("no NMD!")
-#               }
-#           }
-#         }
-#       }
-#     }
-#   }
-#   
-#   #once all the transcripts are checked, if no NMD is found add the SJ to the no-NMD list
-#   if (NMD != "yes") {
-#     new_row <- data.frame(sj_pc[i])
-#     new_row$NMD <- "no"
-#     sj_NMD_or_no <- rbind(sj_NMD_or_no, new_row)
-#   }
-# }
-
-
-
-
-#test code ####
-#to delete once function/loop is better tested
-#this is the first (annotated, protein-coding) example SJ's gene:
-gene_gr <- ann_gtf[ann_gtf$gene_id == "ENSG00000122435"]
-#get only CDS. That's what we need
-#and this will avoid NA errors later when subsetting on transcript
-gene_cds_gr <- gene_gr[gene_gr$type == "CDS"]
-#move to dataframes because they're easier and avoid GRanges metadata NA problem
-gene_df <- data.frame(gene_cds_gr)
-transcripts <- unique(gene_df$transcript_id)
-transcript_df <- gene_df %>%
-  filter(transcript_id == "ENST00000370141") %>%
-  filter(type == "CDS")
-
-#transcript = "ENST00000482437"
-transcript = "ENST00000370143"
-ses = se$exon_number
-
-#get GRanges object for transcript CDS exons
-trans_gr <- gene_cds_gr[gene_cds_gr$transcript_id == transcript]
-#get sequence of the (annotated) transcript
-trans_full_seq <- getSeq(Hsapiens, trans_gr)
-trans_full_seq <- suppressWarnings(getSeq(Hsapiens, trans_gr))
-
-#remove skipped exons from transcript's set of exons
-used_exons <- c(1:length(trans_full_seq))
-used_exons <- used_exons[!used_exons %in% ses ]
-trans_se_seq <- trans_full_seq[used_exons]
-
-#put together the exons to get the AS isoform sequence:
-trans_se_seq_uni <- ""
-for (i in 1:length(trans_se_seq)) {
-  trans_se_seq_uni <- paste(trans_se_seq_uni, as.character(trans_se_seq[i]), sep = "")
-}
-trans_se_seq_uni <- DNAString(trans_se_seq_uni)
-trans_se_seq_aa <- translate(trans_se_seq_uni)
-#warning that last two bases were ignored. Out-of-frame! Hooray!
-countPattern("*", trans_se_seq_aa)
-#17! Good!
-
-#for now assume that the last CDS exon is the last exon
-#(otherwise it might be NMD-triggering anyways)
-
-#get aa position of first *
-#reverse translate that to nucleotide position
-ptc_pos <- (unlist(gregexpr("\\*", trans_se_seq_aa))[1])*3
-# nucleotide 330 in this example
-
-#use the list of exons to see if it's >50 nt upstream of a junction
-exon_sizes <- width(trans_se_seq)
-exon_starts <- 1
-for (i in 1:length(exon_sizes)-1) {
-  exon_starts <- append(exon_starts, exon_starts[i] + exon_sizes[i])
-}
-print(exon_starts)
-
-if (any(ptc_pos < (exon_starts - 50))) {
-  print("NMD!")
-} else {
-  print("No NMD!")
-}
-
-#to assess things at the end, will need to somehow compare depth (not just number I think)
+#will probably need to somehow compare depth (not just number I think)
 #of NMD-targeting splice junctions to other splice junctions
 #because everything is going to have some of both
 
