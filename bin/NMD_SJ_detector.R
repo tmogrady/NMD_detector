@@ -45,9 +45,8 @@ check_NMD <- function(transcript, exons, gene_gr) {
 }
 
 #set parameters ####
-#number of unique reads required to consider junctions
-#later maybe normalize to read depth (sj reads per million?)
-sj_thres <- 100
+#number of unique reads per million required to consider junctions
+sj_thres <- 1
 
 #read in data ####
 #read in STAR SJ.out.tab file
@@ -61,8 +60,55 @@ sj <- sj %>%
   mutate(strand = ifelse(strand == 1, "+",
                          ifelse(strand == 2, "-",
                                 "*")))
+
+# #explore sj read depth a bit ####
+# #using MC1_S34_L004_R1_001_MC1_S34_L004_R2_001.hg38plusAkata_inverted-SJ.out.tab
+# #as an example
+# ggplot(sj, aes(x=unique)) +
+#   geom_histogram()
+# 
+# sum(sj$unique)
+# #76,115,116
+# quantile(sj$unique)
+# # 0%   25%   50%   75%  100% 
+# # 0     1     4    66 86704
+# nrow(sj)
+# #377,437
+# sj %>%
+#   filter(unique > 1) %>%
+#   nrow()
+# #255,235
+# sj %>%
+#   filter(unique > 10) %>%
+#   nrow()
+# #138,704
+# 
+# #calculate unique reads per million unique splice-junction mapped reads
+# sj$uniquepm <- (sj$unique/sum(sj$unique))*1e06
+# quantile(sj$uniquepm)
+# # 0%          25%          50%          75%         100% 
+# # 0.000000e+00 1.313799e-02 5.255198e-02 8.671077e-01 1.139117e+03 
+# 
+# sj %>%
+#   filter(uniquepm > 0.5) %>%
+#   nrow()
+# #105375
+# sj %>%
+#   filter(uniquepm > 1) %>%
+#   nrow()
+# #90,947
+# sj %>%
+#   filter(uniquepm > 10) %>%
+#   nrow()
+# #22407
+
+#what is the best way to pick a threshold?
+#possible improvement: machine learning component to select best threshold
+
+#######
+sj$uniquepm <- (sj$unique/sum(sj$unique))*1e06
 sj_filt <- sj %>%
-  filter(unique >= sj_thres)
+  filter(uniquepm >= sj_thres)
 
 #make SJ data a GRanges object
 sj_gr <- makeGRangesFromDataFrame(sj_filt, keep.extra.columns = TRUE)
