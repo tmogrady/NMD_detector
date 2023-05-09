@@ -57,8 +57,8 @@ ann_gtf_gene <- ann_gtf[mcols(ann_gtf)$type == "gene"]
 #read in data ####
 #read in STAR SJ.out.tab file
 #sj <- read.table("input_data/MC1_truncated_test-SJ.out.tab")
-sj <- read.table("../temp/MC1_S34_L004_R1_001_MC1_S34_L004_R2_001.hg38plusAkata_inverted-SJ.out.tab")
-#sj <- read.table("../temp/MZ1_S38_L004_R1_001_MZ1_S38_L004_R2_001.hg38plusAkata_inverted-SJ.out.tab")
+#sj <- read.table("../temp/MC1_S34_L004_R1_001_MC1_S34_L004_R2_001.hg38plusAkata_inverted-SJ.out.tab")
+sj <- read.table("../temp/MZ1_S38_L004_R1_001_MZ1_S38_L004_R2_001.hg38plusAkata_inverted-SJ.out.tab")
 
 #name columns for GRanges (and my own sanity)
 colnames(sj) <- c("chr","start","end","strand","motif","ann","unique","multi","overhang")
@@ -75,39 +75,53 @@ sj <- sj %>%
 #   geom_histogram()
 # 
 # sum(sj$unique)
-# #76,115,116
+# #76,115,116 for MC1
+# #29,220,512 for MZ1
 # quantile(sj$unique)
-# # 0%   25%   50%   75%  100% 
+# #MC1:
+# # 0%   25%   50%   75%  100%
 # # 0     1     4    66 86704
+# #MZ1:
+# # 0%   25%   50%   75%  100% 
+# # 0     1     2    11 33376 
 # nrow(sj)
-# #377,437
+# #377,437 for MC1
+# #483,998 for MZ1
 # sj %>%
 #   filter(unique > 1) %>%
 #   nrow()
-# #255,235
+# #255,235 for MC1
+# #271,847 for MZ1
 # sj %>%
 #   filter(unique > 10) %>%
 #   nrow()
-# #138,704
+# #138,704 for MC1
+# #121,571 for MZ1
 # 
 # #calculate unique reads per million unique splice-junction mapped reads
 # sj$uniquepm <- (sj$unique/sum(sj$unique))*1e06
 # quantile(sj$uniquepm)
+# #MC1
+# # 0%          25%          50%          75%         100%
+# # 0.000000e+00 1.313799e-02 5.255198e-02 8.671077e-01 1.139117e+03
+# #MZ1 
 # # 0%          25%          50%          75%         100% 
-# # 0.000000e+00 1.313799e-02 5.255198e-02 8.671077e-01 1.139117e+03 
-# 
+# # 0.000000e+00 3.422254e-02 6.844507e-02 3.764479e-01 1.142211e+03 
 # sj %>%
 #   filter(uniquepm > 0.5) %>%
 #   nrow()
-# #105375
+# #105375 for MC1
+# #111629 for MZ1
 # sj %>%
 #   filter(uniquepm > 1) %>%
 #   nrow()
-# #90,947
+# #90,947 for MC1
+# #93,094 for MZ1
 # sj %>%
 #   filter(uniquepm > 10) %>%
 #   nrow()
-# #22407
+# #22407 for MC1
+# #20404 for MZ1
 
 #what is the best way to pick a threshold?
 #possible improvement: machine learning component to select best threshold
@@ -222,6 +236,10 @@ parallel::stopCluster(cl = my.cluster)
 #output of this loop: 
 #     sj_NMD_or_no (df of SJs in protein-coding genes, and whether or not they 
 #          are likely NMD-targeting)
+
+#write some files to play with
+# write.table(sj_NMD_or_no, "../temp/MC1_S34_L004_R1_001_MC1_S34_L004_R2_001.hg38plusAkata_inverted-SJ_NMD_or_no.txt",
+#             row.names = FALSE, col.names = TRUE, sep = "\t", quote = FALSE)
 
 sj_NMD <- sj_NMD_or_no %>%
   filter(NMD == "yes")
