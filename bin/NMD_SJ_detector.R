@@ -1,4 +1,5 @@
 #to assess likelihood of NMD targeting by STAR-reported splice junctions
+#IN DEVELOPMENT
 
 library("dplyr")
 library("GenomicRanges")
@@ -48,10 +49,16 @@ check_NMD <- function(transcript, exons, gene_gr) {
 #number of unique reads per million required to consider junctions
 sj_thres <- 1
 
+#get annotation (gtf) ####
+#should get this from a package instead of a gtf file (or have option)
+ann_gtf <- import("/Applications/Genomics_applications/Genomes_and_transcriptomes/hg38_plus_Akata_inverted.gtf")
+ann_gtf_gene <- ann_gtf[mcols(ann_gtf)$type == "gene"]
+
 #read in data ####
 #read in STAR SJ.out.tab file
-sj <- read.table("input_data/MC1_truncated_test-SJ.out.tab")
+#sj <- read.table("input_data/MC1_truncated_test-SJ.out.tab")
 sj <- read.table("../temp/MC1_S34_L004_R1_001_MC1_S34_L004_R2_001.hg38plusAkata_inverted-SJ.out.tab")
+#sj <- read.table("../temp/MZ1_S38_L004_R1_001_MZ1_S38_L004_R2_001.hg38plusAkata_inverted-SJ.out.tab")
 
 #name columns for GRanges (and my own sanity)
 colnames(sj) <- c("chr","start","end","strand","motif","ann","unique","multi","overhang")
@@ -105,18 +112,13 @@ sj <- sj %>%
 #what is the best way to pick a threshold?
 #possible improvement: machine learning component to select best threshold
 
-#######
+#filter & sort SJs ####
 sj$uniquepm <- (sj$unique/sum(sj$unique))*1e06
 sj_filt <- sj %>%
   filter(uniquepm >= sj_thres)
 
-#make SJ data a GRanges object
+#make SJ data a GRanges object:
 sj_gr <- makeGRangesFromDataFrame(sj_filt, keep.extra.columns = TRUE)
-
-#get annotation (gtf)
-#should get this from a package instead of a gtf file (or have option)
-ann_gtf <- import("/Applications/Genomics_applications/Genomes_and_transcriptomes/hg38_plus_Akata_inverted.gtf")
-ann_gtf_gene <- ann_gtf[mcols(ann_gtf)$type == "gene"]
 
 #get genes that contain detected SJs ####
 ovrlp <- findOverlaps(sj_gr, ann_gtf_gene, type = "within", select = "first")
@@ -145,7 +147,7 @@ sj_notPC <- sj_ann[sj_ann$gene_biotype != "protein_coding"]
 sj_notPC_df <- data.frame(sj_notPC) #maybe not necessary to df
 
 #test each SJ for NMD ####
-#first set up parallelization
+#first set up parallelization:
 n.cores <- parallel::detectCores() - 1
 my.cluster <- parallel::makeCluster(
   n.cores, 
@@ -226,7 +228,7 @@ sj_NMD <- sj_NMD_or_no %>%
 sj_no_NMD <- sj_NMD_or_no %>%
   filter(NMD == "no")
 
-#should produce other lists as well:
+#should eventually produce other lists as well:
 #    in-frame SJs
 #    out-of-frame SJs that don't meet NMD rules
 #    SJs that aren't assessed for NMD (unannotated sites)
