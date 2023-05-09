@@ -233,12 +233,13 @@ sj_NMD_or_no <- foreach(
 
 parallel::stopCluster(cl = my.cluster)
 
+#examine output ####
 #output of this loop: 
 #     sj_NMD_or_no (df of SJs in protein-coding genes, and whether or not they 
 #          are likely NMD-targeting)
 
 #write some files to play with
-# write.table(sj_NMD_or_no, "../temp/MC1_S34_L004_R1_001_MC1_S34_L004_R2_001.hg38plusAkata_inverted-SJ_NMD_or_no.txt",
+# write.table(sj_NMD_or_no, "../temp/MZ1_S38_L004_R1_001_MZ1_S38_L004_R2_001.hg38plusAkata_inverted-SJ_NMD_or_no.txt",
 #             row.names = FALSE, col.names = TRUE, sep = "\t", quote = FALSE)
 
 sj_NMD <- sj_NMD_or_no %>%
